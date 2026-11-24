@@ -237,7 +237,7 @@
       font-size: 14px;
     }
 
-    /* Загрузка файлов */
+    /* Загрузка афиши */
     .file-upload {
       position: relative;
       border: 2px dashed var(--border-color);
@@ -310,6 +310,11 @@
       white-space: pre-wrap;
       word-break: break-word;
       line-height: 1.45;
+      transition: border-color 0.2s;
+    }
+
+    .post-preview-box.over-limit {
+      border-color: var(--danger-color);
     }
 
     .post-preview-box a {
@@ -320,13 +325,28 @@
     .char-counter {
       display: flex;
       justify-content: space-between;
-      font-size: 12px;
+      flex-wrap: wrap;
+      gap: 4px;
+      font-size: 12.5px;
       color: var(--hint-color);
-      margin-top: 6px;
+      margin-top: 8px;
     }
 
-    .char-counter.warn {
-      color: #d97706;
+    .char-counter.over-limit {
+      color: var(--danger-color);
+      font-weight: 600;
+    }
+
+    .limit-alert {
+      display: none;
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background-color: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      color: var(--danger-color);
+      font-size: 13px;
+      font-weight: 500;
     }
 
     .submit-btn {
@@ -339,12 +359,12 @@
       font-size: 16px;
       font-weight: 600;
       cursor: pointer;
-      margin-top: 18px;
+      margin-top: 16px;
       transition: opacity 0.2s;
     }
 
     .submit-btn:disabled {
-      opacity: 0.5;
+      opacity: 0.45;
       cursor: not-allowed;
     }
 
@@ -458,16 +478,16 @@
         <div class="hint">Ссылки, вставленные в текст, при публикации станут кликабельными.</div>
       </div>
 
-      <!-- БЛОК 4: МЕДИА И КОММЕНТАРИЙ -->
+      <!-- БЛОК 4: АФИША И КОММЕНТАРИЙ -->
       <div class="section-title">4. Афиша и комментарий</div>
 
       <div class="form-group">
-        <label>Фото или видео (до 10 файлов, обычно 1 афиша)</label>
+        <label>Афиша (1 изображение)</label>
         <div class="file-upload">
-          <input type="file" id="mediaInput" accept="image/*,video/*" multiple>
+          <input type="file" id="mediaInput" accept="image/*">
           <div class="file-upload-text">
-            <strong>Нажмите, чтобы прикрепить файлы</strong>
-            JPG, PNG, MP4 (до 10 файлов, суммарно до 25 МБ)
+            <strong>Нажмите, чтобы выбрать афишу</strong>
+            JPG, PNG, WEBP (1 картинка до 10 МБ)
           </div>
         </div>
         <div class="preview-list" id="previewList"></div>
@@ -482,9 +502,10 @@
       <div class="section-title">Предпросмотр поста в канале</div>
       <div class="post-preview-box" id="livePreview"></div>
       <div class="char-counter" id="charCounter">
-        <span>Длина текста: 0 симв.</span>
-        <span id="captionModeHint">Укладывается в стандартную подпись к фото</span>
+        <span id="charCountText">Длина поста: 0 / 4096 симв.</span>
+        <span id="captionModeHint">Максимум 4096 символов</span>
       </div>
+      <div class="limit-alert" id="limitAlert"></div>
 
       <button type="submit" class="submit-btn" id="submitBtn">Отправить на модерацию</button>
     </form>
@@ -506,12 +527,11 @@
     tg.expand();
 
     // =========================================================
-    // НАСТРОЙКИ
+    // НАСТРОЙКИ — ВСТАВЬТЕ ВАШ URL GOOGLE APPS SCRIPT (/exec)
     // =========================================================
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzUVqvJB9YQkTs0UljReBLSeFHFVq5dhc3K1YV1UgC_3ovZ82e-Hkp0Umd5uYXJ1Sjt/exec";
-    const GOOGLE_MAPS_API_KEY = ""; // Вставьте ключ Google Maps Places API
+    const GOOGLE_MAPS_API_KEY = "";
 
-    // Подключение Google Places Autocomplete
     function loadGoogleMapsAutocomplete() {
       if (!GOOGLE_MAPS_API_KEY) return;
       const script = document.createElement('script');
@@ -674,7 +694,7 @@
       updatePreview();
     });
 
-    // Форматирование дат в стиле канала
+    // Форматирование дат
     const DAYS_RU = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
     const MONTHS_RU = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
 
@@ -719,7 +739,79 @@
         .replace(/>/g, '&gt;');
     }
 
-    // Живой предпросмотр поста
+    // =========================================================
+    // ЗАГРУЗКА ОДНОЙ АФИШИ (КАРТИНКИ)
+    // =========================================================
+    const mediaInput = document.getElementById('mediaInput');
+    const previewList = document.getElementById('previewList');
+    let attachedFiles = [];
+    let isSubmitting = false;
+    let isOverLimit = false;
+
+    mediaInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      if (!file.type.startsWith('image/')) {
+        alert('Пожалуйста, выберите изображение (JPG, PNG, WEBP).');
+        mediaInput.value = '';
+        return;
+      }
+
+      if (file.size > 10 * 1024 * 1024) {
+        alert('Размер картинки не должен превышать 10 МБ.');
+        mediaInput.value = '';
+        return;
+      }
+
+      const base64 = await fileToBase64(file);
+      attachedFiles = [{
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        base64: base64.split(',')[1]
+      }];
+
+      mediaInput.value = '';
+      renderFileList();
+      updatePreview();
+    });
+
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function renderFileList() {
+      previewList.innerHTML = '';
+      attachedFiles.forEach((file) => {
+        const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+        const item = document.createElement('div');
+        item.className = 'preview-item';
+        item.innerHTML = `
+          <span>🖼 ${escapeHtml(file.name)} (${sizeMB} МБ)</span>
+          <button type="button" class="remove-file" onclick="removeFile()">Удалить</button>
+        `;
+        previewList.appendChild(item);
+      });
+    }
+
+    window.removeFile = () => {
+      attachedFiles = [];
+      renderFileList();
+      updatePreview();
+    };
+
+    // =========================================================
+    // ЖИВОЙ ПРЕДПРОСМОТР И ПРОВЕРКА ЛИМИТА 4096 СИМВОЛОВ
+    // =========================================================
+    const submitBtn = document.getElementById('submitBtn');
+    const MAX_POST_LENGTH = 4096;
+
     function updatePreview() {
       const title = document.getElementById('title').value.trim() || '[Название мероприятия]';
       const sessionsLines = formatSessionsLines(getSessionsData());
@@ -748,7 +840,6 @@
         ? `<a href="${escapeHtml(effectiveMapUrl)}" target="_blank">${escapeHtml(address)}</a>`
         : escapeHtml(address);
 
-      // Строка цены: 🪙 7/10€ (fienta.com) или 🪙 25€ (на входе) или 🪙 Бесплатно
       let priceHtml = escapeHtml(priceVal);
       if (ticketUrl && ticketSeller) {
         priceHtml = `<a href="${escapeHtml(ticketUrl)}" target="_blank">${escapeHtml(priceVal)}</a> (<a href="${escapeHtml(ticketUrl)}" target="_blank">${escapeHtml(ticketSeller)}</a>)`;
@@ -781,15 +872,33 @@ ____
 
       const plainLength = previewEl.innerText.length;
       const counterEl = document.getElementById('charCounter');
-      const hintEl = document.getElementById('captionModeHint');
-      counterEl.firstElementChild.textContent = `Длина текста: ${plainLength} симв.`;
+      const countTextEl = document.getElementById('charCountText');
+      const alertEl = document.getElementById('limitAlert');
 
-      if (plainLength > 1024) {
-        counterEl.classList.add('warn');
-        hintEl.textContent = 'Длиннее 1024 симв. (фото будет превью над текстом)';
+      countTextEl.textContent = `Длина поста: ${plainLength} / ${MAX_POST_LENGTH} симв.`;
+
+      if (plainLength > MAX_POST_LENGTH) {
+        const excess = plainLength - MAX_POST_LENGTH;
+        isOverLimit = true;
+
+        previewEl.classList.add('over-limit');
+        counterEl.classList.add('over-limit');
+        alertEl.style.display = 'block';
+        alertEl.textContent = `⚠️ Превышен максимальный размер поста на ${excess} симв. (максимум ${MAX_POST_LENGTH} симв.). Пожалуйста, сократите описание.`;
+
+        if (!isSubmitting) {
+          submitBtn.disabled = true;
+        }
       } else {
-        counterEl.classList.remove('warn');
-        hintEl.textContent = 'Укладывается в стандартную подпись к фото';
+        isOverLimit = false;
+
+        previewEl.classList.remove('over-limit');
+        counterEl.classList.remove('over-limit');
+        alertEl.style.display = 'none';
+
+        if (!isSubmitting) {
+          submitBtn.disabled = false;
+        }
       }
     }
 
@@ -799,73 +908,18 @@ ____
     });
     updatePreview();
 
-    // Работа с файлами (до 10 штук, до 25 МБ)
-    const mediaInput = document.getElementById('mediaInput');
-    const previewList = document.getElementById('previewList');
-    let attachedFiles = [];
-
-    mediaInput.addEventListener('change', async (e) => {
-      const files = Array.from(e.target.files);
-
-      for (const file of files) {
-        if (attachedFiles.length >= 10) {
-          alert('В один пост Telegram можно прикрепить не более 10 медиафайлов.');
-          break;
-        }
-        const totalSize = attachedFiles.reduce((acc, f) => acc + f.size, 0) + file.size;
-        if (totalSize > 25 * 1024 * 1024) {
-          alert('Суммарный размер файлов не должен превышать 25 МБ.');
-          break;
-        }
-
-        const base64 = await fileToBase64(file);
-        attachedFiles.push({
-          name: file.name,
-          type: file.type,
-          size: file.size,
-          base64: base64.split(',')[1]
-        });
-      }
-
-      mediaInput.value = '';
-      renderFileList();
-    });
-
-    function fileToBase64(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-    }
-
-    function renderFileList() {
-      previewList.innerHTML = '';
-      attachedFiles.forEach((file, index) => {
-        const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
-        const item = document.createElement('div');
-        item.className = 'preview-item';
-        item.innerHTML = `
-          <span>📎 ${escapeHtml(file.name)} (${sizeMB} МБ)</span>
-          <button type="button" class="remove-file" onclick="removeFile(${index})">Удалить</button>
-        `;
-        previewList.appendChild(item);
-      });
-    }
-
-    window.removeFile = (index) => {
-      attachedFiles.splice(index, 1);
-      renderFileList();
-    };
-
     // Отправка формы
     const form = document.getElementById('eventForm');
-    const submitBtn = document.getElementById('submitBtn');
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
+      if (isOverLimit) {
+        document.getElementById('limitAlert').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+
+      isSubmitting = true;
       submitBtn.disabled = true;
       submitBtn.textContent = 'Отправка заявки...';
 
@@ -920,7 +974,8 @@ ____
         }
       } catch (err) {
         alert('Не удалось отправить: ' + err.message);
-        submitBtn.disabled = false;
+        isSubmitting = false;
+        submitBtn.disabled = isOverLimit;
         submitBtn.textContent = 'Отправить на модерацию';
       }
     });
