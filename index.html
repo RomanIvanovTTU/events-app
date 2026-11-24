@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Добавить мероприятие</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root {
+      --bg-color: var(--tg-theme-bg-color, #ffffff);
+      --secondary-bg: var(--tg-theme-secondary-bg-color, #f3f4f6);
+      --text-color: var(--tg-theme-text-color, #111827);
+      --hint-color: var(--tg-theme-hint-color, #6b7280);
+      --link-color: var(--tg-theme-link-color, #2481cc);
+      --button-color: var(--tg-theme-button-color, #2481cc);
+      --button-text: var(--tg-theme-button-text-color, #ffffff);
+      --border-color: rgba(128, 128, 128, 0.22);
+      --danger-color: #ef4444;
+      --success-color: #10b981;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      padding: 16px;
+      padding-bottom: 48px;
+      line-height: 1.45;
+      font-size: 15px;
+    }
+
+    .header {
+      margin-bottom: 20px;
+    }
+
+    .header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .header p {
+      font-size: 14px;
+      color: var(--hint-color);
+    }
+
+    .user-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 10px;
+      padding: 6px 12px;
+      background-color: var(--secondary-bg);
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--hint-color);
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--hint-color);
+      margin: 24px 0 12px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .required {
+      color: var(--danger-color);
+    }
+
+    input[type="text"],
+    input[type="url"],
+    input[type="date"],
+    input[type="time"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      background-color: var(--secondary-bg);
+      color: var(--text-color);
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--button-color);
+    }
+
+    input:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 140px;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .row > .form-group {
+      flex: 1;
+    }
+
+    /* Карточка даты/сеанса */
+    .session-card {
+      background-color: var(--secondary-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 10px;
+      position: relative;
+    }
+
+    .session-card input {
+      background-color: var(--bg-color);
+    }
+
+    .session-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--hint-color);
+    }
+
+    .remove-session-btn {
+      background: none;
+      border: none;
+      color: var(--danger-color);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .add-session-btn {
+      width: 100%;
+      padding: 10px;
+      border: 1px dashed var(--button-color);
+      border-radius: 10px;
+      background: transparent;
+      color: var(--button-color);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 14px;
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      user-select: none;
+      font-size: 14px;
+      font-weight: 400;
+    }
+
+    .checkbox-row:has(input:disabled) {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .checkbox-row input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--button-color);
+      cursor: pointer;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: var(--hint-color);
+      margin-top: 5px;
+    }
+
+    .map-status {
+      display: inline-block;
+      font-size: 12px;
+      color: var(--success-color);
+      margin-top: 4px;
+      font-weight: 500;
+    }
+
+    .pac-container {
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      margin-top: 4px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      font-family: inherit;
+      z-index: 9999;
+    }
+    .pac-item {
+      padding: 8px 12px;
+      color: var(--text-color);
+      border-top: 1px solid var(--border-color);
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .pac-item:hover {
+      background-color: var(--secondary-bg);
+    }
+    .pac-item-query {
+      color: var(--text-color);
+      font-size: 14px;
+    }
+
+    /* Загрузка файлов */
+    .file-upload {
+      position: relative;
+      border: 2px dashed var(--border-color);
+      border-radius: 12px;
+      padding: 18px;
+      text-align: center;
+      background-color: var(--secondary-bg);
+      cursor: pointer;
+    }
+
+    .file-upload input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .file-upload-text {
+      font-size: 13px;
+      color: var(--hint-color);
+    }
+
+    .file-upload-text strong {
+      color: var(--button-color);
+      display: block;
+      margin-bottom: 4px;
+      font-size: 15px;
+    }
+
+    .preview-list {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .preview-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background-color: var(--secondary-bg);
+      border-radius: 8px;
+      font-size: 13px;
+    }
+
+    .preview-item span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 75%;
+    }
+
+    .remove-file {
+      color: var(--danger-color);
+      background: none;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 2px 6px;
+    }
+
+    /* Живой предпросмотр поста */
+    .post-preview-box {
+      background-color: var(--secondary-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 13.5px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.45;
+    }
+
+    .post-preview-box a {
+      color: var(--link-color);
+      text-decoration: underline;
+    }
+
+    .char-counter {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--hint-color);
+      margin-top: 6px;
+    }
+
+    .char-counter.warn {
+      color: #d97706;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      background-color: var(--button-color);
+      color: var(--button-text);
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 18px;
+      transition: opacity 0.2s;
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .success-screen {
+      display: none;
+      text-align: center;
+      padding: 48px 16px;
+    }
+
+    .success-icon {
+      font-size: 52px;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="formContainer">
+    <div class="header">
+      <h1>Предложить мероприятие</h1>
+      <p>Заполните детали события. После проверки пост появится в канале, а событие добавится в общий Google Календарь.</p>
+      <div class="user-badge" id="userBadge">👤 Определение профиля Telegram...</div>
+    </div>
+
+    <form id="eventForm">
+      <!-- БЛОК 1: ОСНОВНОЕ, ДАТЫ И БИЛЕТЫ -->
+      <div class="section-title">1. Основная информация и билеты</div>
+
+      <div class="form-group">
+        <label>Название мероприятия <span class="required">*</span></label>
+        <input type="text" id="title" placeholder='Например: Спектакль "Улыбайся"' required>
+      </div>
+
+      <!-- Динамический список дат / сеансов -->
+      <label>Дата и время проведения <span class="required">*</span></label>
+      <div id="sessionsContainer"></div>
+      <button type="button" class="add-session-btn" id="addSessionBtn">+ Добавить ещё дату или сеанс</button>
+
+      <!-- Цена -->
+      <div class="form-group">
+        <label>Цена / Условия входа <span class="required">*</span></label>
+        <label class="checkbox-row">
+          <input type="checkbox" id="isFree">
+          <span>Бесплатно / Вход свободный</span>
+        </label>
+        <input type="text" id="price" placeholder="Например: 14€ / 7/10€ / 25€" required>
+      </div>
+
+      <!-- Продавец билетов + чек-бокс "На входе" + ссылка -->
+      <div class="form-group">
+        <label>Продавец билетов</label>
+        <label class="checkbox-row">
+          <input type="checkbox" id="atDoor">
+          <span>На входе</span>
+        </label>
+        <input type="text" id="ticketSeller" placeholder="fienta.com">
+      </div>
+
+      <div class="form-group">
+        <label>Ссылка на покупку билетов</label>
+        <input type="url" id="ticketUrl" placeholder="https://fienta.com/...">
+      </div>
+
+      <!-- БЛОК 2: МЕСТО ПРОВЕДЕНИЯ -->
+      <div class="section-title">2. Место проведения</div>
+
+      <div class="form-group">
+        <label>Название площадки <span class="required">*</span></label>
+        <input type="text" id="venueName" placeholder="Например: Fort Bar" required>
+      </div>
+
+      <div class="form-group">
+        <label>Ссылка на площадку</label>
+        <input type="url" id="venueUrl" placeholder="https://www.fortbar.ee/">
+      </div>
+
+      <div class="form-group">
+        <label>Точный адрес (поиск по Google Maps) <span class="required">*</span></label>
+        <input type="text" id="address" placeholder="Начните вводить улицу или название места..." autocomplete="off" required>
+        <div class="map-status" id="mapStatus" style="display: none;">📍 Место выбрано из Google Maps (ссылка прикреплена)</div>
+        <div class="hint">Выберите вариант из выпадающего списка или введите адрес вручную.</div>
+      </div>
+
+      <div class="form-group">
+        <label>Ссылка на Google Maps</label>
+        <input type="url" id="mapUrl" placeholder="Подставится автоматически или вставьте свою ссылку">
+      </div>
+
+      <!-- БЛОК 3: ОПИСАНИЕ И СОЦСЕТИ -->
+      <div class="section-title">3. Описание и соцсети</div>
+
+      <div class="row">
+        <div class="form-group" style="flex: 1;">
+          <label>Тип ссылки</label>
+          <select id="eventLinkType">
+            <option value="⭐️ Facebook event">⭐️ Facebook event</option>
+            <option value="⭐️ Instagram post">⭐️ Instagram post</option>
+            <option value="🌐 Сайт события">🌐 Сайт события</option>
+            <option value="📝 Регистрация">📝 Регистрация</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex: 1.6;">
+          <label>Ссылка на событие</label>
+          <input type="url" id="eventUrl" placeholder="https://www.facebook.com/events/...">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Описание мероприятия <span class="required">*</span></label>
+        <textarea id="description" placeholder="О чём этот вечер, программа, участники, возрастные ограничения (18+)..." required></textarea>
+        <div class="hint">Ссылки, вставленные в текст, при публикации станут кликабельными.</div>
+      </div>
+
+      <!-- БЛОК 4: МЕДИА И КОММЕНТАРИЙ -->
+      <div class="section-title">4. Афиша и комментарий</div>
+
+      <div class="form-group">
+        <label>Фото или видео (до 10 файлов, обычно 1 афиша)</label>
+        <div class="file-upload">
+          <input type="file" id="mediaInput" accept="image/*,video/*" multiple>
+          <div class="file-upload-text">
+            <strong>Нажмите, чтобы прикрепить файлы</strong>
+            JPG, PNG, MP4 (до 10 файлов, суммарно до 25 МБ)
+          </div>
+        </div>
+        <div class="preview-list" id="previewList"></div>
+      </div>
+
+      <div class="form-group">
+        <label>Комментарий для модератора (не попадёт в пост)</label>
+        <input type="text" id="moderatorNote" placeholder="Например: просим опубликовать ближе к выходным">
+      </div>
+
+      <!-- ПРЕДПРОСМОТР ПОСТА -->
+      <div class="section-title">Предпросмотр поста в канале</div>
+      <div class="post-preview-box" id="livePreview"></div>
+      <div class="char-counter" id="charCounter">
+        <span>Длина текста: 0 симв.</span>
+        <span id="captionModeHint">Укладывается в стандартную подпись к фото</span>
+      </div>
+
+      <button type="submit" class="submit-btn" id="submitBtn">Отправить на модерацию</button>
+    </form>
+  </div>
+
+  <!-- ЭКРАН УСПЕШНОЙ ОТПРАВКИ -->
+  <div class="success-screen" id="successScreen">
+    <div class="success-icon">✅</div>
+    <h2>Заявка отправлена!</h2>
+    <p style="color: var(--hint-color); margin-top: 10px;">
+      Спасибо! Мы получили анонс. Как только модератор одобрит мероприятие, оно сразу появится в Google Календаре, а бот пришлёт вам дату и время публикации поста.
+    </p>
+    <button class="submit-btn" style="margin-top: 24px;" onclick="closeApp()">Закрыть</button>
+  </div>
+
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
+
+    // =========================================================
+    // НАСТРОЙКИ
+    // =========================================================
+    const SCRIPT_URL = "ВСТАВЬТЕ_СЮДА_URL_ВАШЕГО_GOOGLE_APPS_SCRIPT";
+    const GOOGLE_MAPS_API_KEY = ""; // Вставьте ключ Google Maps Places API
+
+    // Подключение Google Places Autocomplete
+    function loadGoogleMapsAutocomplete() {
+      if (!GOOGLE_MAPS_API_KEY) return;
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places&language=ru&callback=initAutocomplete`;
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+    }
+
+    window.initAutocomplete = function () {
+      const addressInput = document.getElementById('address');
+      const mapUrlInput = document.getElementById('mapUrl');
+      const mapStatus = document.getElementById('mapStatus');
+      const venueNameInput = document.getElementById('venueName');
+
+      const autocomplete = new google.maps.places.Autocomplete(addressInput, {
+        fields: ['formatted_address', 'url', 'name']
+      });
+
+      autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace();
+        if (!place || !place.formatted_address) return;
+
+        addressInput.value = place.formatted_address;
+        if (place.url) mapUrlInput.value = place.url;
+
+        if (!venueNameInput.value.trim() && place.name && !place.formatted_address.startsWith(place.name)) {
+          venueNameInput.value = place.name;
+        }
+
+        mapStatus.style.display = 'inline-block';
+        updatePreview();
+      });
+
+      addressInput.addEventListener('input', () => {
+        mapStatus.style.display = 'none';
+      });
+    };
+    loadGoogleMapsAutocomplete();
+
+    // Инициализация пользователя Telegram
+    const tgUser = tg.initDataUnsafe?.user;
+    const userBadge = document.getElementById('userBadge');
+    if (tgUser) {
+      const displayName = tgUser.username ? `@${tgUser.username}` : `${tgUser.first_name} (ID: ${tgUser.id})`;
+      userBadge.textContent = `👤 Вы вошли как: ${displayName}`;
+    } else {
+      userBadge.textContent = '🌐 Режим предпросмотра (вне Telegram)';
+    }
+
+    // =========================================================
+    // УПРАВЛЕНИЕ НЕСКОЛЬКИМИ ДАТАМИ / СЕАНСАМИ
+    // =========================================================
+    const sessionsContainer = document.getElementById('sessionsContainer');
+    const addSessionBtn = document.getElementById('addSessionBtn');
+
+    function createSessionBlock(index) {
+      const div = document.createElement('div');
+      div.className = 'session-card';
+      div.innerHTML = `
+        <div class="session-header">
+          <span class="session-label">Дата / сеанс #${index + 1}</span>
+          ${index > 0 ? '<button type="button" class="remove-session-btn">Удалить</button>' : ''}
+        </div>
+        <div class="form-group" style="margin-bottom: 10px;">
+          <label>Дата <span class="required">*</span></label>
+          <input type="date" class="s-date" required>
+        </div>
+        <div class="row">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label>Время начала <span class="required">*</span></label>
+            <input type="time" class="s-start" required>
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label>Время окончания</label>
+            <input type="time" class="s-end">
+          </div>
+        </div>
+      `;
+
+      div.querySelectorAll('input').forEach(inp => {
+        inp.addEventListener('input', updatePreview);
+        inp.addEventListener('change', updatePreview);
+      });
+
+      const removeBtn = div.querySelector('.remove-session-btn');
+      if (removeBtn) {
+        removeBtn.addEventListener('click', () => {
+          div.remove();
+          renumberSessions();
+          updatePreview();
+        });
+      }
+
+      return div;
+    }
+
+    function renumberSessions() {
+      document.querySelectorAll('.session-card').forEach((card, idx) => {
+        card.querySelector('.session-label').textContent = `Дата / сеанс #${idx + 1}`;
+      });
+    }
+
+    addSessionBtn.addEventListener('click', () => {
+      const count = document.querySelectorAll('.session-card').length;
+      if (count >= 10) {
+        alert('Можно добавить не более 10 дат.');
+        return;
+      }
+      sessionsContainer.appendChild(createSessionBlock(count));
+      updatePreview();
+    });
+
+    sessionsContainer.appendChild(createSessionBlock(0));
+
+    // =========================================================
+    // ЛОГИКА ЧЕК-БОКСОВ "БЕСПЛАТНО" И "НА ВХОДЕ"
+    // =========================================================
+    const isFreeCheckbox = document.getElementById('isFree');
+    const priceInput = document.getElementById('price');
+    const atDoorCheckbox = document.getElementById('atDoor');
+    const ticketSellerInput = document.getElementById('ticketSeller');
+    const ticketUrlInput = document.getElementById('ticketUrl');
+
+    isFreeCheckbox.addEventListener('change', () => {
+      if (isFreeCheckbox.checked) {
+        priceInput.value = 'Бесплатно';
+        priceInput.disabled = true;
+
+        atDoorCheckbox.checked = false;
+        atDoorCheckbox.disabled = true;
+
+        ticketSellerInput.value = '';
+        ticketSellerInput.disabled = true;
+
+        ticketUrlInput.value = '';
+        ticketUrlInput.disabled = true;
+      } else {
+        priceInput.value = '';
+        priceInput.disabled = false;
+
+        atDoorCheckbox.disabled = false;
+        ticketSellerInput.disabled = false;
+        ticketUrlInput.disabled = false;
+      }
+      updatePreview();
+    });
+
+    atDoorCheckbox.addEventListener('change', () => {
+      if (atDoorCheckbox.checked) {
+        ticketSellerInput.value = 'на входе';
+        ticketSellerInput.disabled = true;
+        ticketUrlInput.value = '';
+        ticketUrlInput.disabled = true;
+      } else {
+        ticketSellerInput.value = '';
+        ticketSellerInput.disabled = false;
+        ticketUrlInput.disabled = false;
+      }
+      updatePreview();
+    });
+
+    // Форматирование дат в стиле канала
+    const DAYS_RU = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
+    const MONTHS_RU = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+
+    function getSessionsData() {
+      const cards = document.querySelectorAll('.session-card');
+      return Array.from(cards).map(card => ({
+        date: card.querySelector('.s-date').value,
+        startTime: card.querySelector('.s-start').value,
+        endTime: card.querySelector('.s-end').value
+      }));
+    }
+
+    function formatSessionsLines(sessions) {
+      const grouped = [];
+      sessions.forEach(s => {
+        const timeStr = s.startTime || '[Время]';
+        const range = (s.startTime && s.endTime) ? `${s.startTime}-${s.endTime}` : timeStr;
+
+        if (!s.date) {
+          grouped.push({ key: 'empty_' + Math.random(), dateLabel: '[День недели], [Дата]', times: [range] });
+          return;
+        }
+
+        const existing = grouped.find(g => g.key === s.date);
+        if (existing) {
+          existing.times.push(range);
+        } else {
+          const [year, month, day] = s.date.split('-').map(Number);
+          const d = new Date(year, month - 1, day);
+          const dateLabel = `${DAYS_RU[d.getDay()]}, ${day} ${MONTHS_RU[month - 1]}`;
+          grouped.push({ key: s.date, dateLabel, times: [range] });
+        }
+      });
+
+      return grouped.map(g => `📅 ${g.dateLabel}, ${g.times.join(', ')}`).join('\n');
+    }
+
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    // Живой предпросмотр поста
+    function updatePreview() {
+      const title = document.getElementById('title').value.trim() || '[Название мероприятия]';
+      const sessionsLines = formatSessionsLines(getSessionsData());
+
+      const venueName = document.getElementById('venueName').value.trim() || '[Площадка]';
+      const venueUrl = document.getElementById('venueUrl').value.trim();
+      const address = document.getElementById('address').value.trim() || '[Адрес]';
+      const mapUrl = document.getElementById('mapUrl').value.trim();
+
+      const isFree = isFreeCheckbox.checked;
+      const atDoor = !isFree && atDoorCheckbox.checked;
+      const priceVal = isFree ? 'Бесплатно' : (priceInput.value.trim() || '[Цена]');
+      const ticketSeller = isFree ? '' : (atDoor ? 'на входе' : ticketSellerInput.value.trim());
+      const ticketUrl = (isFree || atDoor) ? '' : ticketUrlInput.value.trim();
+
+      const eventLinkType = document.getElementById('eventLinkType').value;
+      const eventUrl = document.getElementById('eventUrl').value.trim();
+      const description = document.getElementById('description').value.trim() || '[Описание мероприятия]';
+
+      const venueHtml = venueUrl
+        ? `<a href="${escapeHtml(venueUrl)}" target="_blank">${escapeHtml(venueName)}</a>`
+        : escapeHtml(venueName);
+
+      const effectiveMapUrl = mapUrl || (address !== '[Адрес]' ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venueName + ' ' + address)}` : '');
+      const addressHtml = effectiveMapUrl
+        ? `<a href="${escapeHtml(effectiveMapUrl)}" target="_blank">${escapeHtml(address)}</a>`
+        : escapeHtml(address);
+
+      // Строка цены: 🪙 7/10€ (fienta.com) или 🪙 25€ (на входе) или 🪙 Бесплатно
+      let priceHtml = escapeHtml(priceVal);
+      if (ticketUrl && ticketSeller) {
+        priceHtml = `<a href="${escapeHtml(ticketUrl)}" target="_blank">${escapeHtml(priceVal)}</a> (<a href="${escapeHtml(ticketUrl)}" target="_blank">${escapeHtml(ticketSeller)}</a>)`;
+      } else if (ticketUrl) {
+        priceHtml = `<a href="${escapeHtml(ticketUrl)}" target="_blank">${escapeHtml(priceVal)}</a>`;
+      } else if (ticketSeller) {
+        priceHtml = `${escapeHtml(priceVal)} (${escapeHtml(ticketSeller)})`;
+      }
+
+      const eventLinkBlock = eventUrl
+        ? `\n<a href="${escapeHtml(eventUrl)}" target="_blank">${escapeHtml(eventLinkType)}</a>\n`
+        : '\n';
+
+      const htmlPost = 
+`<b>${escapeHtml(title)}</b>
+
+${sessionsLines}
+📍 ${venueHtml} (${addressHtml})
+🪙 ${priceHtml}
+${eventLinkBlock}
+${escapeHtml(description)}
+____
+➡️ <a href="https://t.me/romanivanovevents/4">Как добавить своё мероприятие</a>.
+➡️ <a href="https://calendar.google.com/calendar/u/0?cid=ZDhiNDdiNmFjMWI3MzQ5Mjg4MjI0ZmI0YjA1NTRkNzlmZWIzMTQ4ZjdiNDIxZDI5N2RlOWY2MWI1ZGJiOWRjY0Bncm91cC5jYWxlbmRhci5nb29nbGUuY29t">Google Calendar</a> (со всеми мероприятиями)
+➡️ <a href="https://t.me/romanivanovevents/54">2026 - Расписание на весь год</a> (закреплённый пост)
+➡️ <a href="https://t.me/romanivanovchannel">Roman Ivanov Channel</a>.`;
+
+      const previewEl = document.getElementById('livePreview');
+      previewEl.innerHTML = htmlPost;
+
+      const plainLength = previewEl.innerText.length;
+      const counterEl = document.getElementById('charCounter');
+      const hintEl = document.getElementById('captionModeHint');
+      counterEl.firstElementChild.textContent = `Длина текста: ${plainLength} симв.`;
+
+      if (plainLength > 1024) {
+        counterEl.classList.add('warn');
+        hintEl.textContent = 'Длиннее 1024 симв. (фото будет превью над текстом)';
+      } else {
+        counterEl.classList.remove('warn');
+        hintEl.textContent = 'Укладывается в стандартную подпись к фото';
+      }
+    }
+
+    document.querySelectorAll('#eventForm input, #eventForm select, #eventForm textarea').forEach(el => {
+      el.addEventListener('input', updatePreview);
+      el.addEventListener('change', updatePreview);
+    });
+    updatePreview();
+
+    // Работа с файлами (до 10 штук, до 25 МБ)
+    const mediaInput = document.getElementById('mediaInput');
+    const previewList = document.getElementById('previewList');
+    let attachedFiles = [];
+
+    mediaInput.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files);
+
+      for (const file of files) {
+        if (attachedFiles.length >= 10) {
+          alert('В один пост Telegram можно прикрепить не более 10 медиафайлов.');
+          break;
+        }
+        const totalSize = attachedFiles.reduce((acc, f) => acc + f.size, 0) + file.size;
+        if (totalSize > 25 * 1024 * 1024) {
+          alert('Суммарный размер файлов не должен превышать 25 МБ.');
+          break;
+        }
+
+        const base64 = await fileToBase64(file);
+        attachedFiles.push({
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          base64: base64.split(',')[1]
+        });
+      }
+
+      mediaInput.value = '';
+      renderFileList();
+    });
+
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function renderFileList() {
+      previewList.innerHTML = '';
+      attachedFiles.forEach((file, index) => {
+        const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+        const item = document.createElement('div');
+        item.className = 'preview-item';
+        item.innerHTML = `
+          <span>📎 ${escapeHtml(file.name)} (${sizeMB} МБ)</span>
+          <button type="button" class="remove-file" onclick="removeFile(${index})">Удалить</button>
+        `;
+        previewList.appendChild(item);
+      });
+    }
+
+    window.removeFile = (index) => {
+      attachedFiles.splice(index, 1);
+      renderFileList();
+    };
+
+    // Отправка формы
+    const form = document.getElementById('eventForm');
+    const submitBtn = document.getElementById('submitBtn');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Отправка заявки...';
+
+      const isFree = isFreeCheckbox.checked;
+      const atDoor = !isFree && atDoorCheckbox.checked;
+
+      const payload = {
+        organizer: tgUser ? {
+          id: tgUser.id,
+          username: tgUser.username || '',
+          firstName: tgUser.first_name || '',
+          lastName: tgUser.last_name || ''
+        } : null,
+        moderatorNote: document.getElementById('moderatorNote').value.trim(),
+        title: document.getElementById('title').value.trim(),
+        sessions: getSessionsData(),
+        isFree: isFree,
+        atDoor: atDoor,
+        price: isFree ? 'Бесплатно' : priceInput.value.trim(),
+        ticketSeller: isFree ? '' : (atDoor ? 'на входе' : ticketSellerInput.value.trim()),
+        ticketUrl: (isFree || atDoor) ? '' : ticketUrlInput.value.trim(),
+        venueName: document.getElementById('venueName').value.trim(),
+        venueUrl: document.getElementById('venueUrl').value.trim(),
+        address: document.getElementById('address').value.trim(),
+        mapUrl: document.getElementById('mapUrl').value.trim(),
+        eventLinkType: document.getElementById('eventLinkType').value,
+        eventUrl: document.getElementById('eventUrl').value.trim(),
+        description: document.getElementById('description').value.trim(),
+        files: attachedFiles
+      };
+
+      if (SCRIPT_URL.includes("ВСТАВЬТЕ_СЮДА")) {
+        console.log("Payload для бэкенда:", payload);
+        setTimeout(() => {
+          showSuccess();
+        }, 700);
+        return;
+      }
+
+      try {
+        const response = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        if (result.status === 'ok') {
+          showSuccess();
+        } else {
+          throw new Error(result.message || 'Ошибка при сохранении заявки');
+        }
+      } catch (err) {
+        alert('Не удалось отправить: ' + err.message);
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Отправить на модерацию';
+      }
+    });
+
+    function showSuccess() {
+      document.getElementById('formContainer').style.display = 'none';
+      document.getElementById('successScreen').style.display = 'block';
+      if (tg.HapticFeedback) {
+        tg.HapticFeedback.notificationOccurred('success');
+      }
+    }
+
+    function closeApp() {
+      if (tg.initData) {
+        tg.close();
+      } else {
+        location.reload();
+      }
+    }
+  </script>
+</body>
+</html>
