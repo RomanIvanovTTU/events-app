@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Добавить мероприятие</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="translations.js"></script>
   <style>
     :root {
       --bg-color: var(--tg-theme-bg-color, #ffffff);
@@ -39,15 +40,54 @@
       margin-bottom: 20px;
     }
 
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
     .header h1 {
       font-size: 22px;
       font-weight: 700;
-      margin-bottom: 6px;
+      line-height: 1.25;
+    }
+
+    .lang-switcher {
+      display: inline-flex;
+      background-color: var(--secondary-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 2px;
+      flex-shrink: 0;
+    }
+
+    .lang-btn {
+      background: transparent;
+      border: none;
+      color: var(--hint-color);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 5px 9px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .lang-btn.active {
+      background-color: var(--button-color);
+      color: var(--button-text);
     }
 
     .header p {
       font-size: 14px;
       color: var(--hint-color);
+    }
+
+    .header p a {
+      color: var(--link-color);
+      text-decoration: underline;
     }
 
     .user-badge {
@@ -393,151 +433,154 @@
 
   <div id="formContainer">
     <div class="header">
-      <h1>Предложить мероприятие</h1>
-      <p>Заполните детали события. После проверки пост появится в канале, а событие добавится в общий Google Календарь.</p>
-      <div class="user-badge" id="userBadge">👤 Определение профиля Telegram...</div>
+      <div class="header-top">
+        <h1 data-i18n="headerTitle">Добавить мероприятие</h1>
+        <div class="lang-switcher" id="langSwitcher"></div>
+      </div>
+      <p id="headerSubtitle"></p>
+      <div class="user-badge" id="userBadge">👤 ...</div>
     </div>
 
     <form id="eventForm">
       <!-- БЛОК 1: ОСНОВНОЕ, ДАТЫ И БИЛЕТЫ -->
-      <div class="section-title">1. Основная информация и билеты</div>
+      <div class="section-title" data-i18n="sec1Title">1. Основная информация и билеты</div>
 
       <div class="form-group">
-        <label>Название мероприятия <span class="required">*</span></label>
-        <input type="text" id="title" placeholder='Например: Спектакль "Улыбайся"' required>
+        <label><span data-i18n="titleLabel">Название мероприятия</span> <span class="required">*</span></label>
+        <input type="text" id="title" data-i18n-placeholder="titlePlaceholder" required>
       </div>
 
       <!-- Динамический список дат / сеансов -->
-      <label>Дата и время проведения <span class="required">*</span></label>
+      <label><span data-i18n="sessionsLabel">Дата и время проведения</span> <span class="required">*</span></label>
       <div id="sessionsContainer"></div>
-      <button type="button" class="add-session-btn" id="addSessionBtn">+ Добавить ещё дату или сеанс</button>
+      <button type="button" class="add-session-btn" id="addSessionBtn" data-i18n="addSessionBtn">+ Добавить ещё дату или сеанс</button>
 
       <!-- Условия входа / Цена (радио-кнопки) -->
       <div class="form-group">
-        <label>Условия входа / Цена <span class="required">*</span></label>
+        <label><span data-i18n="entryLabel">Условия входа / Цена</span> <span class="required">*</span></label>
         <div class="radio-group">
           <label class="checkbox-row">
             <input type="radio" name="entryType" value="free">
-            <span>Бесплатно</span>
+            <span data-i18n="entryFree">Бесплатно</span>
           </label>
           <label class="checkbox-row">
             <input type="radio" name="entryType" value="donation">
-            <span>Добровольные пожертвования</span>
+            <span data-i18n="entryDonation">Добровольные пожертвования</span>
           </label>
           <label class="checkbox-row">
             <input type="radio" name="entryType" value="ticket" checked>
-            <span>Билет</span>
+            <span data-i18n="entryTicket">Билет</span>
           </label>
         </div>
-        <input type="text" id="price" placeholder="Например: 14€ / 7/10€ / 25€" required>
+        <input type="text" id="price" required>
       </div>
 
       <!-- Продавец билетов + чек-бокс "На входе" + ссылка -->
       <div class="form-group">
-        <label>Продавец билетов</label>
+        <label data-i18n="sellerLabel">Продавец билетов</label>
         <label class="checkbox-row">
           <input type="checkbox" id="atDoor">
-          <span>На входе</span>
+          <span data-i18n="atDoorLabel">На входе</span>
         </label>
-        <input type="text" id="ticketSeller" placeholder="fienta.com">
+        <input type="text" id="ticketSeller" data-i18n-placeholder="sellerPlaceholder">
       </div>
 
       <div class="form-group">
-        <label>Ссылка на покупку билетов</label>
+        <label data-i18n="ticketUrlLabel">Ссылка на покупку билетов</label>
         <input type="url" id="ticketUrl" placeholder="https://fienta.com/...">
       </div>
 
       <!-- БЛОК 2: МЕСТО ПРОВЕДЕНИЯ -->
-      <div class="section-title">2. Место проведения</div>
+      <div class="section-title" data-i18n="sec2Title">2. Место проведения</div>
 
       <div class="form-group">
-        <label>Название площадки <span class="required">*</span></label>
-        <input type="text" id="venueName" placeholder="Например: Fort Bar" required>
+        <label><span data-i18n="venueNameLabel">Название локации</span> <span class="required">*</span></label>
+        <input type="text" id="venueName" data-i18n-placeholder="venueNamePlaceholder" required>
       </div>
 
       <div class="form-group">
-        <label>Ссылка на площадку</label>
-        <input type="url" id="venueUrl" placeholder="https://www.fortbar.ee/">
+        <label data-i18n="venueUrlLabel">Ссылка на информацию о локации</label>
+        <input type="url" id="venueUrl" placeholder="https://...">
       </div>
 
       <div class="form-group">
-        <label>Точный адрес (поиск по Google Maps) <span class="required">*</span></label>
-        <input type="text" id="address" placeholder="Начните вводить улицу или название места..." autocomplete="off" required>
-        <div class="map-status" id="mapStatus" style="display: none;">📍 Место выбрано из Google Maps (ссылка прикреплена)</div>
-        <div class="hint">Выберите вариант из выпадающего списка или введите адрес вручную.</div>
+        <label><span data-i18n="addressLabel">Точный адрес (поиск по Google Maps)</span> <span class="required">*</span></label>
+        <input type="text" id="address" data-i18n-placeholder="addressPlaceholder" autocomplete="off" required>
+        <div class="map-status" id="mapStatus" data-i18n="mapStatusSelected" style="display: none;">📍 Место выбрано из Google Maps (ссылка прикреплена)</div>
+        <div class="hint" data-i18n="addressHint">Выберите вариант из выпадающего списка или введите адрес вручную.</div>
       </div>
 
       <div class="form-group">
-        <label>Ссылка на Google Maps</label>
-        <input type="url" id="mapUrl" placeholder="Подставится автоматически или вставьте свою ссылку">
+        <label data-i18n="mapUrlLabel">Ссылка на Google Maps</label>
+        <input type="url" id="mapUrl" data-i18n-placeholder="mapUrlPlaceholder">
       </div>
 
       <!-- БЛОК 3: ОПИСАНИЕ И СОЦСЕТИ -->
-      <div class="section-title">3. Описание и соцсети</div>
+      <div class="section-title" data-i18n="sec3Title">3. Описание и соцсети</div>
 
       <div class="row">
         <div class="form-group" style="flex: 1;">
-          <label>Тип ссылки</label>
+          <label data-i18n="linkTypeLabel">Тип ссылки</label>
           <select id="eventLinkType">
             <option value="✦ Facebook event">✦ Facebook event</option>
             <option value="✦ Instagram post">✦ Instagram post</option>
-            <option value="✦ Сайт события">✦ Сайт события</option>
-            <option value="✦ Регистрация">✦ Регистрация</option>
+            <option value="✦ Сайт мероприятия" data-i18n="linkTypeSite">✦ Сайт мероприятия</option>
+            <option value="✦ Регистрация" data-i18n="linkTypeReg">✦ Регистрация</option>
           </select>
         </div>
         <div class="form-group" style="flex: 1.6;">
-          <label>Ссылка на событие</label>
+          <label data-i18n="eventUrlLabel">Ссылка на событие</label>
           <input type="url" id="eventUrl" placeholder="https://www.facebook.com/events/...">
         </div>
       </div>
 
       <div class="form-group">
-        <label>Описание мероприятия <span class="required">*</span></label>
-        <textarea id="description" placeholder="О чём этот вечер, программа, участники, возрастные ограничения (18+)..." required></textarea>
-        <div class="hint">Ссылки, вставленные в текст, при публикации станут кликабельными.</div>
+        <label><span data-i18n="descLabel">Описание мероприятия</span> <span class="required">*</span></label>
+        <textarea id="description" data-i18n-placeholder="descPlaceholder" required></textarea>
+        <div class="hint" data-i18n="descHint">Ссылки, вставленные в текст, при публикации станут кликабельными.</div>
       </div>
 
       <!-- БЛОК 4: АФИША И КОММЕНТАРИЙ -->
-      <div class="section-title">4. Афиша и комментарий</div>
+      <div class="section-title" data-i18n="sec4Title">4. Афиша и комментарий</div>
 
       <div class="form-group">
-        <label>Афиша (1 изображение)</label>
+        <label data-i18n="posterLabel">Афиша (1 изображение)</label>
         <div class="file-upload">
           <input type="file" id="mediaInput" accept="image/*">
           <div class="file-upload-text">
-            <strong>Нажмите, чтобы выбрать афишу</strong>
-            JPG, PNG, WEBP (1 картинка до 10 МБ)
+            <strong data-i18n="uploadStrong">Нажмите, чтобы выбрать афишу</strong>
+            <span data-i18n="uploadHint">JPG, PNG, WEBP (1 картинка до 10 МБ)</span>
           </div>
         </div>
         <div class="preview-list" id="previewList"></div>
       </div>
 
       <div class="form-group">
-        <label>Комментарий для модератора (не попадёт в пост)</label>
-        <input type="text" id="moderatorNote" placeholder="Например: просим опубликовать ближе к выходным">
+        <label data-i18n="noteLabel">Комментарий для модератора (не попадёт в пост)</label>
+        <input type="text" id="moderatorNote" data-i18n-placeholder="notePlaceholder">
       </div>
 
       <!-- ПРЕДПРОСМОТР ПОСТА -->
-      <div class="section-title">Предпросмотр поста в канале</div>
+      <div class="section-title" data-i18n="previewSectionTitle">Предпросмотр поста в канале</div>
       <div class="post-preview-box" id="livePreview"></div>
       <div class="char-counter" id="charCounter">
-        <span id="charCountText">Длина поста: 0 / 4096 симв.</span>
-        <span id="captionModeHint">Максимум 4096 символов</span>
+        <span id="charCountText"></span>
+        <span data-i18n="charMaxHint">Максимум 4096 символов</span>
       </div>
       <div class="limit-alert" id="limitAlert"></div>
 
-      <button type="submit" class="submit-btn" id="submitBtn">Отправить на модерацию</button>
+      <button type="submit" class="submit-btn" id="submitBtn" data-i18n="submitBtn">Отправить на модерацию</button>
     </form>
   </div>
 
   <!-- ЭКРАН УСПЕШНОЙ ОТПРАВКИ -->
   <div class="success-screen" id="successScreen">
     <div class="success-icon">✅</div>
-    <h2>Заявка отправлена!</h2>
-    <p style="color: var(--hint-color); margin-top: 10px;">
+    <h2 data-i18n="successTitle">Заявка отправлена!</h2>
+    <p style="color: var(--hint-color); margin-top: 10px;" data-i18n="successText">
       Спасибо! Мы получили анонс. Как только модератор одобрит мероприятие, оно сразу появится в Google Календаре, а бот пришлёт вам дату и время публикации поста.
     </p>
-    <button class="submit-btn" style="margin-top: 24px;" onclick="closeApp()">Закрыть</button>
+    <button class="submit-btn" style="margin-top: 24px;" onclick="closeApp()" data-i18n="closeBtn">Закрыть</button>
   </div>
 
   <script>
@@ -551,10 +594,90 @@
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzUVqvJB9YQkTs0UljReBLSeFHFVq5dhc3K1YV1UgC_3ovZ82e-Hkp0Umd5uYXJ1Sjt/exec";
     const GOOGLE_MAPS_API_KEY = "";
 
+    // =========================================================
+    // СИСТЕМА ПЕРЕВОДОВ (TRANSLATIONS.JS)
+    // =========================================================
+    const availableLangs = Object.keys(TRANSLATIONS);
+    let currentLang = detectInitialLanguage();
+
+    function detectInitialLanguage() {
+      const saved = localStorage.getItem('app_lang');
+      if (saved && TRANSLATIONS[saved]) return saved;
+
+      const tgLang = (tg.initDataUnsafe?.user?.language_code || '').toLowerCase().slice(0, 2);
+      if (tgLang && TRANSLATIONS[tgLang]) return tgLang;
+
+      return 'ru';
+    }
+
+    function t(key, vars = {}) {
+      const dict = TRANSLATIONS[currentLang] || TRANSLATIONS.ru;
+      let str = dict[key] !== undefined ? dict[key] : (TRANSLATIONS.ru[key] || key);
+      Object.keys(vars).forEach(k => {
+        str = str.replace(new RegExp(`\\{${k}\\}`, 'g'), vars[k]);
+      });
+      return str;
+    }
+
+    function renderLangSwitcher() {
+      const switcher = document.getElementById('langSwitcher');
+      switcher.innerHTML = '';
+      availableLangs.forEach(code => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'lang-btn' + (code === currentLang ? ' active' : '');
+        btn.textContent = TRANSLATIONS[code].langName || code.toUpperCase();
+        btn.addEventListener('click', () => setLanguage(code));
+        switcher.appendChild(btn);
+      });
+    }
+
+    function setLanguage(lang) {
+      if (!TRANSLATIONS[lang]) return;
+      currentLang = lang;
+      localStorage.setItem('app_lang', lang);
+      document.documentElement.lang = lang;
+
+      renderLangSwitcher();
+
+      // Заголовок с HTML-ссылками
+      document.getElementById('headerSubtitle').innerHTML = t('headerSubtitle');
+
+      // Все элементы с data-i18n
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        el.textContent = t(key);
+      });
+
+      // Все плейсхолдеры с data-i18n-placeholder
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        el.placeholder = t(key);
+      });
+
+      updateUserBadge();
+      applyEntryTypeState();
+      renderFileList();
+      updatePreview();
+    }
+
+    // Инициализация пользователя Telegram
+    const tgUser = tg.initDataUnsafe?.user;
+    function updateUserBadge() {
+      const userBadge = document.getElementById('userBadge');
+      if (tgUser) {
+        const displayName = tgUser.username ? `@${tgUser.username}` : `${tgUser.first_name} (ID: ${tgUser.id})`;
+        userBadge.textContent = `👤 ${t('userLoggedAs')} ${displayName}`;
+      } else {
+        userBadge.textContent = `🌐 ${t('userPreviewMode')}`;
+      }
+    }
+
+    // Google Maps Autocomplete
     function loadGoogleMapsAutocomplete() {
       if (!GOOGLE_MAPS_API_KEY) return;
       const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places&language=ru&callback=initAutocomplete`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places&callback=initAutocomplete`;
       script.async = true;
       script.defer = true;
       document.head.appendChild(script);
@@ -591,16 +714,6 @@
     };
     loadGoogleMapsAutocomplete();
 
-    // Инициализация пользователя Telegram
-    const tgUser = tg.initDataUnsafe?.user;
-    const userBadge = document.getElementById('userBadge');
-    if (tgUser) {
-      const displayName = tgUser.username ? `@${tgUser.username}` : `${tgUser.first_name} (ID: ${tgUser.id})`;
-      userBadge.textContent = `👤 Вы вошли как: ${displayName}`;
-    } else {
-      userBadge.textContent = '🌐 Режим предпросмотра (вне Telegram)';
-    }
-
     // =========================================================
     // УПРАВЛЕНИЕ НЕСКОЛЬКИМИ ДАТАМИ / СЕАНСАМИ
     // =========================================================
@@ -612,20 +725,20 @@
       div.className = 'session-card';
       div.innerHTML = `
         <div class="session-header">
-          <span class="session-label">Дата / сеанс #${index + 1}</span>
-          ${index > 0 ? '<button type="button" class="remove-session-btn">Удалить</button>' : ''}
+          <span class="session-label"><span data-i18n="sessionCardLabel">${t('sessionCardLabel')}</span> #${index + 1}</span>
+          ${index > 0 ? `<button type="button" class="remove-session-btn" data-i18n="removeBtn">${t('removeBtn')}</button>` : ''}
         </div>
         <div class="form-group" style="margin-bottom: 10px;">
-          <label>Дата <span class="required">*</span></label>
+          <label><span data-i18n="dateLabel">${t('dateLabel')}</span> <span class="required">*</span></label>
           <input type="date" class="s-date" required>
         </div>
         <div class="row">
           <div class="form-group" style="margin-bottom: 0;">
-            <label>Время начала <span class="required">*</span></label>
+            <label><span data-i18n="startTimeLabel">${t('startTimeLabel')}</span> <span class="required">*</span></label>
             <input type="time" class="s-start" required>
           </div>
           <div class="form-group" style="margin-bottom: 0;">
-            <label>Время окончания</label>
+            <label data-i18n="endTimeLabel">${t('endTimeLabel')}</label>
             <input type="time" class="s-end">
           </div>
         </div>
@@ -650,14 +763,14 @@
 
     function renumberSessions() {
       document.querySelectorAll('.session-card').forEach((card, idx) => {
-        card.querySelector('.session-label').textContent = `Дата / сеанс #${idx + 1}`;
+        card.querySelector('.session-label').innerHTML = `<span data-i18n="sessionCardLabel">${t('sessionCardLabel')}</span> #${idx + 1}`;
       });
     }
 
     addSessionBtn.addEventListener('click', () => {
       const count = document.querySelectorAll('.session-card').length;
       if (count >= 10) {
-        alert('Можно добавить не более 10 дат.');
+        alert(t('alertMaxSessions'));
         return;
       }
       sessionsContainer.appendChild(createSessionBlock(count));
@@ -702,13 +815,17 @@
         }
         priceInput.disabled = false;
         priceInput.required = false;
-        priceInput.placeholder = 'Ожидаемые пожертвования от 5 €';
+        priceInput.placeholder = t('pricePlaceholderDonation');
 
-        atDoorCheckbox.disabled = false;
-        if (!atDoorCheckbox.checked) {
-          ticketSellerInput.disabled = false;
-          ticketUrlInput.disabled = false;
-        }
+        // Раздел продавца билетов полностью отключается при добровольных пожертвованиях
+        atDoorCheckbox.checked = false;
+        atDoorCheckbox.disabled = true;
+
+        ticketSellerInput.value = '';
+        ticketSellerInput.disabled = true;
+
+        ticketUrlInput.value = '';
+        ticketUrlInput.disabled = true;
       } else {
         // mode === 'ticket'
         if (priceInput.value === 'Бесплатно') {
@@ -716,7 +833,7 @@
         }
         priceInput.disabled = false;
         priceInput.required = true;
-        priceInput.placeholder = 'Например: 14€ / 7/10€ / 25€';
+        priceInput.placeholder = t('pricePlaceholderTicket');
 
         atDoorCheckbox.disabled = false;
         if (!atDoorCheckbox.checked) {
@@ -745,9 +862,9 @@
       updatePreview();
     });
 
-    // Форматирование дат
+    // Форматирование дат (пост в канал всегда на русском)
     const DAYS_RU = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
-    const MONTHS_RU = ['января', 'февраля', "марта", 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+    const MONTHS_RU = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
 
     function getSessionsData() {
       const cards = document.querySelectorAll('.session-card');
@@ -804,13 +921,13 @@
       if (!file) return;
 
       if (!file.type.startsWith('image/')) {
-        alert('Пожалуйста, выберите изображение (JPG, PNG, WEBP).');
+        alert(t('alertOnlyImage'));
         mediaInput.value = '';
         return;
       }
 
       if (file.size > 10 * 1024 * 1024) {
-        alert('Размер картинки не должен превышать 10 МБ.');
+        alert(t('alertMaxSize'));
         mediaInput.value = '';
         return;
       }
@@ -844,8 +961,8 @@
         const item = document.createElement('div');
         item.className = 'preview-item';
         item.innerHTML = `
-          <span>🖼 ${escapeHtml(file.name)} (${sizeMB} МБ)</span>
-          <button type="button" class="remove-file" onclick="removeFile()">Удалить</button>
+          <span>🖼 ${escapeHtml(file.name)} (${sizeMB} MB)</span>
+          <button type="button" class="remove-file" onclick="removeFile()">${t('removeBtn')}</button>
         `;
         previewList.appendChild(item);
       });
@@ -880,17 +997,17 @@
       const title = document.getElementById('title').value.trim() || '[Название мероприятия]';
       const sessionsLines = formatSessionsLines(getSessionsData());
 
-      const venueName = document.getElementById('venueName').value.trim() || '[Площадка]';
+      const venueName = document.getElementById('venueName').value.trim() || '[Локация]';
       const venueUrl = document.getElementById('venueUrl').value.trim();
       const address = document.getElementById('address').value.trim() || '[Адрес]';
       const mapUrl = document.getElementById('mapUrl').value.trim();
 
       const mode = getSelectedEntryType();
-      const isFree = mode === 'free';
-      const atDoor = !isFree && atDoorCheckbox.checked;
+      const isTicketMode = mode === 'ticket';
+      const atDoor = isTicketMode && atDoorCheckbox.checked;
       const priceVal = computeFormattedPrice();
-      const ticketSeller = isFree ? '' : (atDoor ? 'на входе' : ticketSellerInput.value.trim());
-      const ticketUrl = (isFree || atDoor) ? '' : ticketUrlInput.value.trim();
+      const ticketSeller = isTicketMode ? (atDoor ? 'на входе' : ticketSellerInput.value.trim()) : '';
+      const ticketUrl = (isTicketMode && !atDoor) ? ticketUrlInput.value.trim() : '';
 
       const eventLinkType = document.getElementById('eventLinkType').value;
       const eventUrl = document.getElementById('eventUrl').value.trim();
@@ -940,7 +1057,7 @@ ____
       const countTextEl = document.getElementById('charCountText');
       const alertEl = document.getElementById('limitAlert');
 
-      countTextEl.textContent = `Длина поста: ${plainLength} / ${MAX_POST_LENGTH} симв.`;
+      countTextEl.textContent = t('charCountFormat', { current: plainLength, max: MAX_POST_LENGTH });
 
       if (plainLength > MAX_POST_LENGTH) {
         const excess = plainLength - MAX_POST_LENGTH;
@@ -949,7 +1066,7 @@ ____
         previewEl.classList.add('over-limit');
         counterEl.classList.add('over-limit');
         alertEl.style.display = 'block';
-        alertEl.textContent = `⚠️ Превышен максимальный размер поста на ${excess} симв. (максимум ${MAX_POST_LENGTH} симв.). Пожалуйста, сократите описание.`;
+        alertEl.textContent = t('limitExceeded', { excess: excess, max: MAX_POST_LENGTH });
 
         if (!isSubmitting) {
           submitBtn.disabled = true;
@@ -971,7 +1088,9 @@ ____
       el.addEventListener('input', updatePreview);
       el.addEventListener('change', updatePreview);
     });
-    updatePreview();
+
+    // Запускаем язык при загрузке
+    setLanguage(currentLang);
 
     // Отправка формы
     const form = document.getElementById('eventForm');
@@ -986,11 +1105,11 @@ ____
 
       isSubmitting = true;
       submitBtn.disabled = true;
-      submitBtn.textContent = 'Отправка заявки...';
+      submitBtn.textContent = t('submittingBtn');
 
       const mode = getSelectedEntryType();
-      const isFree = mode === 'free';
-      const atDoor = !isFree && atDoorCheckbox.checked;
+      const isTicketMode = mode === 'ticket';
+      const atDoor = isTicketMode && atDoorCheckbox.checked;
 
       const payload = {
         organizer: tgUser ? {
@@ -1003,11 +1122,11 @@ ____
         title: document.getElementById('title').value.trim(),
         sessions: getSessionsData(),
         entryType: mode,
-        isFree: isFree,
+        isFree: mode === 'free',
         atDoor: atDoor,
         price: computeFormattedPrice(),
-        ticketSeller: isFree ? '' : (atDoor ? 'на входе' : ticketSellerInput.value.trim()),
-        ticketUrl: (isFree || atDoor) ? '' : ticketUrlInput.value.trim(),
+        ticketSeller: isTicketMode ? (atDoor ? 'на входе' : ticketSellerInput.value.trim()) : '',
+        ticketUrl: (isTicketMode && !atDoor) ? ticketUrlInput.value.trim() : '',
         venueName: document.getElementById('venueName').value.trim(),
         venueUrl: document.getElementById('venueUrl').value.trim(),
         address: document.getElementById('address').value.trim(),
@@ -1037,13 +1156,13 @@ ____
         if (result.status === 'ok') {
           showSuccess();
         } else {
-          throw new Error(result.message || 'Ошибка при сохранении заявки');
+          throw new Error(result.message || 'Error');
         }
       } catch (err) {
-        alert('Не удалось отправить: ' + err.message);
+        alert('Error: ' + err.message);
         isSubmitting = false;
         submitBtn.disabled = isOverLimit;
-        submitBtn.textContent = 'Отправить на модерацию';
+        submitBtn.textContent = t('submitBtn');
       }
     });
 
