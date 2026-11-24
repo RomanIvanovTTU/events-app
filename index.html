@@ -673,43 +673,99 @@
       }
     }
 
-    // Google Maps Autocomplete
+// Google Maps Autocomplete (Places API New)
     function loadGoogleMapsAutocomplete() {
       if (!GOOGLE_MAPS_API_KEY) return;
       const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places&language=${currentLang}&callback=initAutocomplete`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&v=weekly&callback=initAutocomplete`;
       script.async = true;
       script.defer = true;
       document.head.appendChild(script);
     }
 
-    window.initAutocomplete = function () {
+    window.initAutocomplete = async function () {
       const addressInput = document.getElementById('address');
       const mapUrlInput = document.getElementById('mapUrl');
       const mapStatus = document.getElementById('mapStatus');
       const venueNameInput = document.getElementById('venueName');
 
-      const autocomplete = new google.maps.places.Autocomplete(addressInput, {
-        fields: ['formatted_address', 'url', 'name']
-      });
+      const { AutocompleteSuggestion, AutocompleteSessionToken } = await google.maps.importLibrary("places");
 
-      autocomplete.addListener('place_changed', () => {
-        const place = autocomplete.getPlace();
-        if (!place || !place.formatted_address) return;
+      const dropdown = document.createElement('div');
+      dropdown.className = 'pac-container';
+      dropdown.style.display = 'none';
+      dropdown.style.position = 'relative';
+      addressInput.parentNode.insertBefore(dropdown, addressInput.nextSibling);
 
-        addressInput.value = place.formatted_address;
-        if (place.url) mapUrlInput.value = place.url;
-
-        if (!venueNameInput.value.trim() && place.name && !place.formatted_address.startsWith(place.name)) {
-          venueNameInput.value = place.name;
-        }
-
-        mapStatus.style.display = 'inline-block';
-        updatePreview();
-      });
+      let sessionToken = new AutocompleteSessionToken();
+      let debounceTimer = null;
 
       addressInput.addEventListener('input', () => {
         mapStatus.style.display = 'none';
+        clearTimeout(debounceTimer);
+
+        const query = addressInput.value.trim();
+        if (query.length < 3) {
+          dropdown.style.display = 'none';
+          return;
+        }
+
+        debounceTimer = setTimeout(async () => {
+          try {
+            const { suggestions } = await AutocompleteSuggestion.fetchAutocompleteSuggestions({
+              input: query,
+              sessionToken: sessionToken,
+              language: currentLang
+            });
+
+            dropdown.innerHTML = '';
+            if (!suggestions || suggestions.length === 0) {
+              dropdown.style.display = 'none';
+              return;
+            }
+
+            suggestions.forEach((suggestion) => {
+              const prediction = suggestion.placePrediction;
+              if (!prediction) return;
+
+              const item = document.createElement('div');
+              item.className = 'pac-item';
+              item.textContent = prediction.text.toString();
+
+              item.addEventListener('click', async () => {
+                dropdown.style.display = 'none';
+                const place = prediction.toPlace();
+                await place.fetchFields({ fields: ['formattedAddress', 'googleMapsURI', 'displayName'] });
+
+                if (place.formattedAddress) {
+                  addressInput.value = place.formattedAddress;
+                }
+                if (place.googleMapsURI) {
+                  mapUrlInput.value = place.googleMapsURI;
+                }
+                if (!venueNameInput.value.trim() && place.displayName && !place.formattedAddress?.startsWith(place.displayName)) {
+                  venueNameInput.value = place.displayName;
+                }
+
+                sessionToken = new AutocompleteSessionToken();
+                mapStatus.style.display = 'inline-block';
+                updatePreview();
+              });
+
+              dropdown.appendChild(item);
+            });
+
+            dropdown.style.display = 'block';
+          } catch (err) {
+            console.error('Places API error:', err);
+          }
+        }, 300);
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!addressInput.contains(e.target) && !dropdown.contains(e.target)) {
+          dropdown.style.display = 'none';
+        }
       });
     };
     loadGoogleMapsAutocomplete();
