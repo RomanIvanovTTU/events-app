@@ -176,11 +176,19 @@
       margin-bottom: 14px;
     }
 
+    /* Радио-кнопки и чек-боксы */
+    .radio-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
     .checkbox-row {
       display: flex;
       align-items: center;
       gap: 8px;
-      margin-bottom: 8px;
+      margin-bottom: 4px;
       cursor: pointer;
       user-select: none;
       font-size: 14px;
@@ -192,7 +200,8 @@
       cursor: not-allowed;
     }
 
-    .checkbox-row input[type="checkbox"] {
+    .checkbox-row input[type="checkbox"],
+    .checkbox-row input[type="radio"] {
       width: 18px;
       height: 18px;
       accent-color: var(--button-color);
@@ -403,13 +412,23 @@
       <div id="sessionsContainer"></div>
       <button type="button" class="add-session-btn" id="addSessionBtn">+ Добавить ещё дату или сеанс</button>
 
-      <!-- Цена -->
+      <!-- Условия входа / Цена (радио-кнопки) -->
       <div class="form-group">
-        <label>Цена / Условия входа <span class="required">*</span></label>
-        <label class="checkbox-row">
-          <input type="checkbox" id="isFree">
-          <span>Бесплатно / Вход свободный</span>
-        </label>
+        <label>Условия входа / Цена <span class="required">*</span></label>
+        <div class="radio-group">
+          <label class="checkbox-row">
+            <input type="radio" name="entryType" value="free">
+            <span>Бесплатно</span>
+          </label>
+          <label class="checkbox-row">
+            <input type="radio" name="entryType" value="donation">
+            <span>Добровольные пожертвования</span>
+          </label>
+          <label class="checkbox-row">
+            <input type="radio" name="entryType" value="ticket" checked>
+            <span>Билет</span>
+          </label>
+        </div>
         <input type="text" id="price" placeholder="Например: 14€ / 7/10€ / 25€" required>
       </div>
 
@@ -460,10 +479,10 @@
         <div class="form-group" style="flex: 1;">
           <label>Тип ссылки</label>
           <select id="eventLinkType">
-            <option value="⭐️ Facebook event">⭐️ Facebook event</option>
-            <option value="⭐️ Instagram post">⭐️ Instagram post</option>
-            <option value="🌐 Сайт события">🌐 Сайт события</option>
-            <option value="📝 Регистрация">📝 Регистрация</option>
+            <option value="✦ Facebook event">✦ Facebook event</option>
+            <option value="✦ Instagram post">✦ Instagram post</option>
+            <option value="✦ Сайт события">✦ Сайт события</option>
+            <option value="✦ Регистрация">✦ Регистрация</option>
           </select>
         </div>
         <div class="form-group" style="flex: 1.6;">
@@ -648,18 +667,26 @@
     sessionsContainer.appendChild(createSessionBlock(0));
 
     // =========================================================
-    // ЛОГИКА ЧЕК-БОКСОВ "БЕСПЛАТНО" И "НА ВХОДЕ"
+    // ЛОГИКА РАДИО-КНОПОК УСЛОВИЙ ВХОДА И ЧЕК-БОКСА "НА ВХОДЕ"
     // =========================================================
-    const isFreeCheckbox = document.getElementById('isFree');
+    const entryTypeRadios = document.querySelectorAll('input[name="entryType"]');
     const priceInput = document.getElementById('price');
     const atDoorCheckbox = document.getElementById('atDoor');
     const ticketSellerInput = document.getElementById('ticketSeller');
     const ticketUrlInput = document.getElementById('ticketUrl');
 
-    isFreeCheckbox.addEventListener('change', () => {
-      if (isFreeCheckbox.checked) {
+    function getSelectedEntryType() {
+      const checked = document.querySelector('input[name="entryType"]:checked');
+      return checked ? checked.value : 'ticket';
+    }
+
+    function applyEntryTypeState() {
+      const mode = getSelectedEntryType();
+
+      if (mode === 'free') {
         priceInput.value = 'Бесплатно';
         priceInput.disabled = true;
+        priceInput.required = false;
 
         atDoorCheckbox.checked = false;
         atDoorCheckbox.disabled = true;
@@ -669,15 +696,39 @@
 
         ticketUrlInput.value = '';
         ticketUrlInput.disabled = true;
-      } else {
-        priceInput.value = '';
+      } else if (mode === 'donation') {
+        if (priceInput.value === 'Бесплатно') {
+          priceInput.value = '';
+        }
         priceInput.disabled = false;
+        priceInput.required = false;
+        priceInput.placeholder = 'Ожидаемые пожертвования от 5 €';
 
         atDoorCheckbox.disabled = false;
-        ticketSellerInput.disabled = false;
-        ticketUrlInput.disabled = false;
+        if (!atDoorCheckbox.checked) {
+          ticketSellerInput.disabled = false;
+          ticketUrlInput.disabled = false;
+        }
+      } else {
+        // mode === 'ticket'
+        if (priceInput.value === 'Бесплатно') {
+          priceInput.value = '';
+        }
+        priceInput.disabled = false;
+        priceInput.required = true;
+        priceInput.placeholder = 'Например: 14€ / 7/10€ / 25€';
+
+        atDoorCheckbox.disabled = false;
+        if (!atDoorCheckbox.checked) {
+          ticketSellerInput.disabled = false;
+          ticketUrlInput.disabled = false;
+        }
       }
       updatePreview();
+    }
+
+    entryTypeRadios.forEach(radio => {
+      radio.addEventListener('change', applyEntryTypeState);
     });
 
     atDoorCheckbox.addEventListener('change', () => {
@@ -696,7 +747,7 @@
 
     // Форматирование дат
     const DAYS_RU = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
-    const MONTHS_RU = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+    const MONTHS_RU = ['января', 'февраля', "марта", 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
 
     function getSessionsData() {
       const cards = document.querySelectorAll('.session-card');
@@ -729,7 +780,7 @@
         }
       });
 
-      return grouped.map(g => `📅 ${g.dateLabel}, ${g.times.join(', ')}`).join('\n');
+      return grouped.map(g => `<b><i>◷ ${g.dateLabel}, ${g.times.join(', ')}</i></b>`).join('\n');
     }
 
     function escapeHtml(str) {
@@ -812,6 +863,19 @@
     const submitBtn = document.getElementById('submitBtn');
     const MAX_POST_LENGTH = 4096;
 
+    function computeFormattedPrice() {
+      const mode = getSelectedEntryType();
+      const rawPrice = priceInput.value.trim();
+
+      if (mode === 'free') {
+        return 'Бесплатно';
+      }
+      if (mode === 'donation') {
+        return rawPrice ? `Добровольные пожертвования (${rawPrice})` : 'Добровольные пожертвования';
+      }
+      return rawPrice || '[Цена]';
+    }
+
     function updatePreview() {
       const title = document.getElementById('title').value.trim() || '[Название мероприятия]';
       const sessionsLines = formatSessionsLines(getSessionsData());
@@ -821,9 +885,10 @@
       const address = document.getElementById('address').value.trim() || '[Адрес]';
       const mapUrl = document.getElementById('mapUrl').value.trim();
 
-      const isFree = isFreeCheckbox.checked;
+      const mode = getSelectedEntryType();
+      const isFree = mode === 'free';
       const atDoor = !isFree && atDoorCheckbox.checked;
-      const priceVal = isFree ? 'Бесплатно' : (priceInput.value.trim() || '[Цена]');
+      const priceVal = computeFormattedPrice();
       const ticketSeller = isFree ? '' : (atDoor ? 'на входе' : ticketSellerInput.value.trim());
       const ticketUrl = (isFree || atDoor) ? '' : ticketUrlInput.value.trim();
 
@@ -857,15 +922,15 @@
 `<b>${escapeHtml(title)}</b>
 
 ${sessionsLines}
-📍 ${venueHtml} (${addressHtml})
-🪙 ${priceHtml}
+<b><i>⚲ ${venueHtml} (${addressHtml})</i></b>
+<b><i>€ ${priceHtml}</i></b>
 ${eventLinkBlock}
 ${escapeHtml(description)}
+
 ____
-➡️ <a href="https://t.me/romanivanovevents/4">Как добавить своё мероприятие</a>.
-➡️ <a href="https://calendar.google.com/calendar/u/0?cid=ZDhiNDdiNmFjMWI3MzQ5Mjg4MjI0ZmI0YjA1NTRkNzlmZWIzMTQ4ZjdiNDIxZDI5N2RlOWY2MWI1ZGJiOWRjY0Bncm91cC5jYWxlbmRhci5nb29nbGUuY29t">Google Calendar</a> (со всеми мероприятиями)
-➡️ <a href="https://t.me/romanivanovevents/54">2026 - Расписание на весь год</a> (закреплённый пост)
-➡️ <a href="https://t.me/romanivanovchannel">Roman Ivanov Channel</a>.`;
+➔ <a href="https://t.me/romanivanovevents/4">Добавить своё мероприятие</a>.
+➔ <a href="https://calendar.google.com/calendar/u/0?cid=ZDhiNDdiNmFjMWI3MzQ5Mjg4MjI0ZmI0YjA1NTRkNzlmZWIzMTQ4ZjdiNDIxZDI5N2RlOWY2MWI1ZGJiOWRjY0Bncm91cC5jYWxlbmRhci5nb29nbGUuY29t">Google Calendar</a> (со всеми мероприятиями)
+➔ <a href="https://t.me/romanivanovchannel">Roman Ivanov Channel</a>.`;
 
       const previewEl = document.getElementById('livePreview');
       previewEl.innerHTML = htmlPost;
@@ -923,7 +988,8 @@ ____
       submitBtn.disabled = true;
       submitBtn.textContent = 'Отправка заявки...';
 
-      const isFree = isFreeCheckbox.checked;
+      const mode = getSelectedEntryType();
+      const isFree = mode === 'free';
       const atDoor = !isFree && atDoorCheckbox.checked;
 
       const payload = {
@@ -936,9 +1002,10 @@ ____
         moderatorNote: document.getElementById('moderatorNote').value.trim(),
         title: document.getElementById('title').value.trim(),
         sessions: getSessionsData(),
+        entryType: mode,
         isFree: isFree,
         atDoor: atDoor,
-        price: isFree ? 'Бесплатно' : priceInput.value.trim(),
+        price: computeFormattedPrice(),
         ticketSeller: isFree ? '' : (atDoor ? 'на входе' : ticketSellerInput.value.trim()),
         ticketUrl: (isFree || atDoor) ? '' : ticketUrlInput.value.trim(),
         venueName: document.getElementById('venueName').value.trim(),
