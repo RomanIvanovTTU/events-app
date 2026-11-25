@@ -773,6 +773,15 @@
     tg.ready();
     tg.expand();
 
+    let closingConfirmEnabled = false;
+    function enableSafeClosing() {
+      if (!closingConfirmEnabled && typeof tg.enableClosingConfirmation === 'function') {
+        tg.enableClosingConfirmation();
+        closingConfirmEnabled = true;
+      }
+    }
+    document.getElementById('eventForm').addEventListener('input', enableSafeClosing, { once: true });
+
     // =========================================================
     // НАСТРОЙКИ
     // =========================================================
@@ -1667,7 +1676,7 @@
     let isSubmitting = false;
     let isOverLimit = false;
 
-    mediaInput.addEventListener('change', async (e) => {
+mediaInput.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
 
@@ -1677,24 +1686,78 @@
         return;
       }
 
-      if (file.size > 10 * 1024 * 1024) {
+      if (file.size > 15 * 1024 * 1024) {
         alert(t('alertMaxSize'));
         mediaInput.value = '';
         return;
       }
 
-      const base64 = await fileToBase64(file);
-      attachedFiles = [{
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        base64: base64.split(',')[1]
-      }];
+      try {
+        const compressed = await compressImageToJpeg(file, 1280, 0.85);
+        const safeName = file.name.replace(/\.[^.]+$/, '') + '.jpg';
+
+        attachedFiles = [{
+          name: safeName,
+          type: 'image/jpeg',
+          size: compressed.size,
+          base64: compressed.base64
+        }];
+
+        enableSafeClosing();
+      } catch (err) {
+        alert(t('alertOnlyImage'));
+      }
 
       mediaInput.value = '';
       renderFileList();
       updatePreview();
     });
+
+    function compressImageToJpeg(file, maxSide = 1280, quality = 0.85) {
+      return new Promise((resolve, reject) => {
+        const objectUrl = URL.createObjectURL(file);
+        const img = new Image();
+
+        img.onload = () => {
+          URL.revokeObjectURL(objectUrl);
+
+          let width = img.naturalWidth || img.width;
+          let height = img.naturalHeight || img.height;
+
+          if (width > maxSide || height > maxSide) {
+            if (width >= height) {
+              height = Math.round((height * maxSide) / width);
+              width = maxSide;
+            } else {
+              width = Math.round((width * maxSide) / height);
+              height = maxSide;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, width, height);
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const dataUrl = canvas.toDataURL('image/jpeg', quality);
+          const base64 = dataUrl.split(',')[1];
+          const approxBytes = Math.round((base64.length * 3) / 4);
+
+          resolve({ base64, size: approxBytes });
+        };
+
+        img.onerror = (err) => {
+          URL.revokeObjectURL(objectUrl);
+          reject(err);
+        };
+
+        img.src = objectUrl;
+      });
+    }
 
     function fileToBase64(file) {
       return new Promise((resolve, reject) => {
