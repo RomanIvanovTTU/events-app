@@ -1,6 +1,7 @@
 const TRANSLATIONS = {
   ru: {
     langName: "RU",
+    pageTitle: "Добавить мероприятие",
     headerTitle: "Добавить мероприятие",
     headerSubtitle: 'Заполните описание мероприятия. После проверки и подтверждения пост появится в телеграм канале <a href="https://t.me/romanivanovevents" target="_blank">Roman Ivanov Events</a>, а также мероприятие добавится в общедоступный <a href="https://calendar.google.com/calendar/u/0?cid=ZDhiNDdiNmFjMWI3MzQ5Mjg4MjI0ZmI0YjA1NTRkNzlmZWIzMTQ4ZjdiNDIxZDI5N2RlOWY2MWI1ZGJiOWRjY0Bncm91cC5jYWxlbmRhci5nb29nbGUuY29t" target="_blank">Google Календарь</a>.',
     userLoggedAs: "Вы вошли как:",
@@ -26,6 +27,7 @@ const TRANSLATIONS = {
 
     sellerLabel: "Продавец билетов",
     atDoorLabel: "На входе",
+    atDoorPostValue: "на входе",
     sellerPlaceholder: "fienta.com, или piletilevi.ee, или ticketshop.eu",
     ticketUrlLabel: "Ссылка на покупку билетов",
 
@@ -61,6 +63,21 @@ const TRANSLATIONS = {
     charMaxHint: "Максимум 4096 символов",
     limitExceeded: "⚠️ Превышен максимальный размер поста на {excess} симв. (максимум {max} симв.). Пожалуйста, сократите описание.",
 
+    // Заглушки и форматирование для предпросмотра поста
+    days: ["Воскресенье", "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"],
+    months: ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"],
+    formatDate: (dayName, day, monthName) => `${dayName}, ${day} ${monthName}`,
+    phTitle: "[Название мероприятия]",
+    phDate: "[День недели], [Дата]",
+    phTime: "[Время]",
+    phVenue: "[Локация]",
+    phAddress: "[Адрес]",
+    phPrice: "[Цена]",
+    phDesc: "[Описание мероприятия]",
+    footerAddPost: '➔ <a href="https://t.me/romanivanovevents_bot/add">Добавить своё мероприятие</a> (откроется внутри телеграм).',
+    footerCalendar: '➔ <a href="https://calendar.google.com/calendar/u/0?cid=ZDhiNDdiNmFjMWI3MzQ5Mjg4MjI0ZmI0YjA1NTRkNzlmZWIzMTQ4ZjdiNDIxZDI5N2RlOWY2MWI1ZGJiOWRjY0Bncm91cC5jYWxlbmRhci5nb29nbGUuY29t">Google Calendar</a> (со всеми мероприятиями)',
+    footerChannel: '➔ <a href="https://t.me/romanivanovchannel">Roman Ivanov Channel</a>.',
+
     submitBtn: "Отправить на модерацию",
     submittingBtn: "Отправка заявки...",
     successTitle: "Заявка отправлена!",
@@ -74,6 +91,7 @@ const TRANSLATIONS = {
 
   et: {
     langName: "ET",
+    pageTitle: "Lisa üritus",
     headerTitle: "Lisa üritus",
     headerSubtitle: 'Täida ürituse kirjeldus. Pärast ülevaatamist ja kinnitamist ilmub postitus Telegrami kanalis <a href="https://t.me/romanivanovevents" target="_blank">Roman Ivanov Events</a> ning üritus lisatakse avalikku <a href="https://calendar.google.com/calendar/u/0?cid=ZDhiNDdiNmFjMWI3MzQ5Mjg4MjI0ZmI0YjA1NTRkNzlmZWIzMTQ4ZjdiNDIxZDI5N2RlOWY2MWI1ZGJiOWRjY0Bncm91cC5jYWxlbmRhci5nb29nbGUuY29t" target="_blank">Google Kalendrisse</a>.',
     userLoggedAs: "Sisse logitud kui:",
@@ -99,6 +117,7 @@ const TRANSLATIONS = {
 
     sellerLabel: "Piletimüüja",
     atDoorLabel: "Kohapeal",
+    atDoorPostValue: "kohapeal",
     sellerPlaceholder: "fienta.com, või piletilevi.ee, või ticketshop.eu",
     ticketUrlLabel: "Piletite ostulink",
 
@@ -134,6 +153,21 @@ const TRANSLATIONS = {
     charMaxHint: "Maksimaalselt 4096 tähemärki",
     limitExceeded: "⚠️ Postituse maksimaalne pikkus on ületatud {excess} tähemärgi võrra (max {max}). Palun lühenda kirjeldust.",
 
+    // Заглушки и форматирование для предпросмотра поста
+    days: ["Pühapäev", "Esmaspäev", "Teisipäev", "Kolmapäev", "Neljapäev", "Reede", "Laupäev"],
+    months: ["jaanuar", "veebruar", "märts", "aprill", "mai", "juuni", "juuli", "august", "september", "oktoober", "november", "detsember"],
+    formatDate: (dayName, day, monthName) => `${dayName}, ${day}. ${monthName}`,
+    phTitle: "[Ürituse nimi]",
+    phDate: "[Nädalapäev], [Kuupäev]",
+    phTime: "[Kellaaeg]",
+    phVenue: "[Asukoht]",
+    phAddress: "[Aadress]",
+    phPrice: "[Hind]",
+    phDesc: "[Ürituse kirjeldus]",
+    footerAddPost: '➔ <a href="https://t.me/romanivanovevents_bot/add">Lisa oma üritus</a> (avaneb Telegramis).',
+    footerCalendar: '➔ <a href="https://calendar.google.com/calendar/u/0?cid=ZDhiNDdiNmFjMWI3MzQ5Mjg4MjI0ZmI0YjA1NTRkNzlmZWIzMTQ4ZjdiNDIxZDI5N2RlOWY2MWI1ZGJiOWRjY0Bncm91cC5jYWxlbmRhci5nb29nbGUuY29t">Google Calendar</a> (kõik üritused)',
+    footerChannel: '➔ <a href="https://t.me/romanivanovchannel">Roman Ivanov Channel</a>.',
+
     submitBtn: "Saada modereerimisele",
     submittingBtn: "Saadan taotlust...",
     successTitle: "Taotlus saadetud!",
@@ -147,6 +181,7 @@ const TRANSLATIONS = {
 
   en: {
     langName: "EN",
+    pageTitle: "Add an Event",
     headerTitle: "Add an Event",
     headerSubtitle: 'Fill in the event description. Once reviewed and approved, the post will appear in the Telegram channel <a href="https://t.me/romanivanovevents" target="_blank">Roman Ivanov Events</a> and will also be added to the public <a href="https://calendar.google.com/calendar/u/0?cid=ZDhiNDdiNmFjMWI3MzQ5Mjg4MjI0ZmI0YjA1NTRkNzlmZWIzMTQ4ZjdiNDIxZDI5N2RlOWY2MWI1ZGJiOWRjY0Bncm91cC5jYWxlbmRhci5nb29nbGUuY29t" target="_blank">Google Calendar</a>.',
     userLoggedAs: "Logged in as:",
@@ -172,6 +207,7 @@ const TRANSLATIONS = {
 
     sellerLabel: "Ticket Seller",
     atDoorLabel: "At the door",
+    atDoorPostValue: "at the door",
     sellerPlaceholder: "fienta.com, or piletilevi.ee, or ticketshop.eu",
     ticketUrlLabel: "Ticket Purchase Link",
 
@@ -206,6 +242,21 @@ const TRANSLATIONS = {
     charCountFormat: "Post length: {current} / {max} chars",
     charMaxHint: "Maximum 4096 characters",
     limitExceeded: "⚠️ Post exceeds maximum length by {excess} chars (max {max}). Please shorten the description.",
+
+    // Заглушки и форматирование для предпросмотра поста
+    days: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+    months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+    formatDate: (dayName, day, monthName) => `${dayName}, ${day} ${monthName}`,
+    phTitle: "[Event Title]",
+    phDate: "[Day of week], [Date]",
+    phTime: "[Time]",
+    phVenue: "[Location]",
+    phAddress: "[Address]",
+    phPrice: "[Price]",
+    phDesc: "[Event Description]",
+    footerAddPost: '➔ <a href="https://t.me/romanivanovevents_bot/add">Add your event</a> (opens inside Telegram).',
+    footerCalendar: '➔ <a href="https://calendar.google.com/calendar/u/0?cid=ZDhiNDdiNmFjMWI3MzQ5Mjg4MjI0ZmI0YjA1NTRkNzlmZWIzMTQ4ZjdiNDIxZDI5N2RlOWY2MWI1ZGJiOWRjY0Bncm91cC5jYWxlbmRhci5nb29nbGUuY29t">Google Calendar</a> (all events)',
+    footerChannel: '➔ <a href="https://t.me/romanivanovchannel">Roman Ivanov Channel</a>.',
 
     submitBtn: "Submit for Review",
     submittingBtn: "Submitting...",
