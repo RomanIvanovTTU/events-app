@@ -489,7 +489,7 @@
       <div class="form-group">
         <label><span data-i18n="venueNameLabel"></span> <span class="required">*</span></label>
         <input type="text" id="venueName" data-i18n-placeholder="venueNamePlaceholder" required>
-        </div>
+      </div>
 
       <div class="form-group">
         <label data-i18n="venueUrlLabel"></label>
@@ -567,8 +567,6 @@
         <span data-i18n="notifyCheckboxLabel" style="font-size: 13.5px; line-height: 1.4;"></span>
       </label>
 
-<button type="submit" class="submit-btn" id="submitBtn" data-i18n="submitBtn"></button>
-      
       <button type="submit" class="submit-btn" id="submitBtn" data-i18n="submitBtn"></button>
     </form>
   </div>
@@ -1181,7 +1179,7 @@ ${t('footerChannel')}`;
         }
       });
     }
-    
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
@@ -1191,10 +1189,6 @@ ${t('footerChannel')}`;
       }
 
       const canNotify = await askBotWriteAccess();
-
-      isSubmitting = true;
-      submitBtn.disabled = true;
-      submitBtn.textContent = t('submittingBtn');
 
       isSubmitting = true;
       submitBtn.disabled = true;
