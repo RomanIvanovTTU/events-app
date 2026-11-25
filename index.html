@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Добавить мероприятие</title>
+  <title data-i18n="pageTitle"></title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="translations.js"></script>
   <style>
@@ -170,7 +170,6 @@
       flex: 1;
     }
 
-    /* Карточка даты/сеанса */
     .session-card {
       background-color: var(--secondary-bg);
       border: 1px solid var(--border-color);
@@ -216,7 +215,6 @@
       margin-bottom: 14px;
     }
 
-    /* Радио-кнопки и чек-боксы */
     .radio-group {
       display: flex;
       flex-direction: column;
@@ -286,7 +284,6 @@
       font-size: 14px;
     }
 
-    /* Загрузка афиши */
     .file-upload {
       position: relative;
       border: 2px dashed var(--border-color);
@@ -349,7 +346,6 @@
       padding: 2px 6px;
     }
 
-    /* Живой предпросмотр поста */
     .post-preview-box {
       background-color: var(--secondary-bg);
       border: 1px solid var(--border-color);
@@ -434,7 +430,7 @@
   <div id="formContainer">
     <div class="header">
       <div class="header-top">
-        <h1 data-i18n="headerTitle">Добавить мероприятие</h1>
+        <h1 data-i18n="headerTitle"></h1>
         <div class="lang-switcher" id="langSwitcher"></div>
       </div>
       <p id="headerSubtitle"></p>
@@ -443,144 +439,139 @@
 
     <form id="eventForm">
       <!-- БЛОК 1: ОСНОВНОЕ, ДАТЫ И БИЛЕТЫ -->
-      <div class="section-title" data-i18n="sec1Title">1. Основная информация и билеты</div>
+      <div class="section-title" data-i18n="sec1Title"></div>
 
       <div class="form-group">
-        <label><span data-i18n="titleLabel">Название мероприятия</span> <span class="required">*</span></label>
+        <label><span data-i18n="titleLabel"></span> <span class="required">*</span></label>
         <input type="text" id="title" data-i18n-placeholder="titlePlaceholder" required>
       </div>
 
-      <!-- Динамический список дат / сеансов -->
-      <label><span data-i18n="sessionsLabel">Дата и время проведения</span> <span class="required">*</span></label>
+      <label><span data-i18n="sessionsLabel"></span> <span class="required">*</span></label>
       <div id="sessionsContainer"></div>
-      <button type="button" class="add-session-btn" id="addSessionBtn" data-i18n="addSessionBtn">+ Добавить ещё дату или сеанс</button>
+      <button type="button" class="add-session-btn" id="addSessionBtn" data-i18n="addSessionBtn"></button>
 
-      <!-- Условия входа / Цена (радио-кнопки) -->
       <div class="form-group">
-        <label><span data-i18n="entryLabel">Условия входа / Цена</span> <span class="required">*</span></label>
+        <label><span data-i18n="entryLabel"></span> <span class="required">*</span></label>
         <div class="radio-group">
           <label class="checkbox-row">
             <input type="radio" name="entryType" value="free">
-            <span data-i18n="entryFree">Бесплатно</span>
+            <span data-i18n="entryFree"></span>
           </label>
           <label class="checkbox-row">
             <input type="radio" name="entryType" value="donation">
-            <span data-i18n="entryDonation">Добровольные пожертвования</span>
+            <span data-i18n="entryDonation"></span>
           </label>
           <label class="checkbox-row">
             <input type="radio" name="entryType" value="ticket" checked>
-            <span data-i18n="entryTicket">Билет</span>
+            <span data-i18n="entryTicket"></span>
           </label>
         </div>
         <input type="text" id="price" required>
       </div>
 
-      <!-- Продавец билетов + чек-бокс "На входе" + ссылка -->
       <div class="form-group">
-        <label data-i18n="sellerLabel">Продавец билетов</label>
+        <label data-i18n="sellerLabel"></label>
         <label class="checkbox-row">
           <input type="checkbox" id="atDoor">
-          <span data-i18n="atDoorLabel">На входе</span>
+          <span data-i18n="atDoorLabel"></span>
         </label>
         <input type="text" id="ticketSeller" data-i18n-placeholder="sellerPlaceholder">
       </div>
 
       <div class="form-group">
-        <label data-i18n="ticketUrlLabel">Ссылка на покупку билетов</label>
+        <label data-i18n="ticketUrlLabel"></label>
         <input type="url" id="ticketUrl" placeholder="https://fienta.com/...">
       </div>
 
       <!-- БЛОК 2: МЕСТО ПРОВЕДЕНИЯ -->
-      <div class="section-title" data-i18n="sec2Title">2. Место проведения</div>
+      <div class="section-title" data-i18n="sec2Title"></div>
 
       <div class="form-group">
-        <label><span data-i18n="venueNameLabel">Название локации</span> <span class="required">*</span></label>
+        <label><span data-i18n="venueNameLabel"></span> <span class="required">*</span></label>
         <input type="text" id="venueName" data-i18n-placeholder="venueNamePlaceholder" required>
       </div>
 
       <div class="form-group">
-        <label data-i18n="venueUrlLabel">Ссылка на информацию о локации</label>
+        <label data-i18n="venueUrlLabel"></label>
         <input type="url" id="venueUrl" placeholder="https://...">
       </div>
 
       <div class="form-group">
-        <label><span data-i18n="addressLabel">Точный адрес (поиск по Google Maps)</span> <span class="required">*</span></label>
+        <label><span data-i18n="addressLabel"></span> <span class="required">*</span></label>
         <input type="text" id="address" data-i18n-placeholder="addressPlaceholder" autocomplete="off" required>
-        <div class="map-status" id="mapStatus" data-i18n="mapStatusSelected" style="display: none;">📍 Место выбрано из Google Maps (ссылка прикреплена)</div>
-        <div class="hint" data-i18n="addressHint">Выберите вариант из выпадающего списка или введите адрес вручную.</div>
+        <div class="map-status" id="mapStatus" data-i18n="mapStatusSelected" style="display: none;"></div>
+        <div class="hint" data-i18n="addressHint"></div>
       </div>
 
       <div class="form-group">
-        <label data-i18n="mapUrlLabel">Ссылка на Google Maps</label>
+        <label data-i18n="mapUrlLabel"></label>
         <input type="url" id="mapUrl" data-i18n-placeholder="mapUrlPlaceholder">
       </div>
 
       <!-- БЛОК 3: ОПИСАНИЕ И СОЦСЕТИ -->
-      <div class="section-title" data-i18n="sec3Title">3. Описание и соцсети</div>
+      <div class="section-title" data-i18n="sec3Title"></div>
 
       <div class="row">
         <div class="form-group" style="flex: 1;">
-          <label data-i18n="linkTypeLabel">Тип ссылки</label>
+          <label data-i18n="linkTypeLabel"></label>
           <select id="eventLinkType">
             <option value="✦ Facebook event">✦ Facebook event</option>
             <option value="✦ Instagram post">✦ Instagram post</option>
-            <option value="✦ Сайт мероприятия" data-i18n="linkTypeSite">✦ Сайт мероприятия</option>
-            <option value="✦ Регистрация" data-i18n="linkTypeReg">✦ Регистрация</option>
+            <option value="✦ Сайт мероприятия" data-i18n="linkTypeSite"></option>
+            <option value="✦ Регистрация" data-i18n="linkTypeReg"></option>
           </select>
         </div>
         <div class="form-group" style="flex: 1.6;">
-          <label data-i18n="eventUrlLabel">Ссылка на событие</label>
+          <label data-i18n="eventUrlLabel"></label>
           <input type="url" id="eventUrl" placeholder="https://www.facebook.com/events/...">
         </div>
       </div>
 
       <div class="form-group">
-        <label><span data-i18n="descLabel">Описание мероприятия</span> <span class="required">*</span></label>
+        <label><span data-i18n="descLabel"></span> <span class="required">*</span></label>
         <textarea id="description" data-i18n-placeholder="descPlaceholder" required></textarea>
-        <div class="hint" data-i18n="descHint">Ссылки, вставленные в текст, при публикации станут кликабельными.</div>
+        <div class="hint" data-i18n="descHint"></div>
       </div>
 
       <!-- БЛОК 4: АФИША И КОММЕНТАРИЙ -->
-      <div class="section-title" data-i18n="sec4Title">4. Афиша и комментарий</div>
+      <div class="section-title" data-i18n="sec4Title"></div>
 
       <div class="form-group">
-        <label data-i18n="posterLabel">Афиша (1 изображение)</label>
+        <label data-i18n="posterLabel"></label>
         <div class="file-upload">
           <input type="file" id="mediaInput" accept="image/*">
           <div class="file-upload-text">
-            <strong data-i18n="uploadStrong">Нажмите, чтобы выбрать афишу</strong>
-            <span data-i18n="uploadHint">JPG, PNG, WEBP (1 картинка до 10 МБ)</span>
+            <strong data-i18n="uploadStrong"></strong>
+            <span data-i18n="uploadHint"></span>
           </div>
         </div>
         <div class="preview-list" id="previewList"></div>
       </div>
 
       <div class="form-group">
-        <label data-i18n="noteLabel">Комментарий для модератора (не попадёт в пост)</label>
+        <label data-i18n="noteLabel"></label>
         <input type="text" id="moderatorNote" data-i18n-placeholder="notePlaceholder">
       </div>
 
       <!-- ПРЕДПРОСМОТР ПОСТА -->
-      <div class="section-title" data-i18n="previewSectionTitle">Предпросмотр поста в канале</div>
+      <div class="section-title" data-i18n="previewSectionTitle"></div>
       <div class="post-preview-box" id="livePreview"></div>
       <div class="char-counter" id="charCounter">
         <span id="charCountText"></span>
-        <span data-i18n="charMaxHint">Максимум 4096 символов</span>
+        <span data-i18n="charMaxHint"></span>
       </div>
       <div class="limit-alert" id="limitAlert"></div>
 
-      <button type="submit" class="submit-btn" id="submitBtn" data-i18n="submitBtn">Отправить на модерацию</button>
+      <button type="submit" class="submit-btn" id="submitBtn" data-i18n="submitBtn"></button>
     </form>
   </div>
 
   <!-- ЭКРАН УСПЕШНОЙ ОТПРАВКИ -->
   <div class="success-screen" id="successScreen">
     <div class="success-icon">✅</div>
-    <h2 data-i18n="successTitle">Заявка отправлена!</h2>
-    <p style="color: var(--hint-color); margin-top: 10px;" data-i18n="successText">
-      Спасибо! Мы получили анонс. Как только модератор одобрит мероприятие, оно сразу появится в Google Календаре, а бот пришлёт вам дату и время публикации поста.
-    </p>
-    <button class="submit-btn" style="margin-top: 24px;" onclick="closeApp()" data-i18n="closeBtn">Закрыть</button>
+    <h2 data-i18n="successTitle"></h2>
+    <p style="color: var(--hint-color); margin-top: 10px;" data-i18n="successText"></p>
+    <button class="submit-btn" style="margin-top: 24px;" onclick="closeApp()" data-i18n="closeBtn"></button>
   </div>
 
   <script>
@@ -589,7 +580,7 @@
     tg.expand();
 
     // =========================================================
-    // НАСТРОЙКИ — ВСТАВЬТЕ ВАШ URL GOOGLE APPS SCRIPT (/exec)
+    // НАСТРОЙКИ
     // =========================================================
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbySqviSBOlMPSlzF8N6Pra9Q1cQeI1TzFoRALCbNMHACICjjnRAVQoDNRJIIfPe8gWE/exec";
     const GOOGLE_MAPS_API_KEY = "AIzaSyArIrLC_kWYtfscg-_PI-pjsAWe2Uf2RhI";
@@ -607,15 +598,22 @@
       const tgLang = (tg.initDataUnsafe?.user?.language_code || '').toLowerCase().slice(0, 2);
       if (tgLang && TRANSLATIONS[tgLang]) return tgLang;
 
-      return 'ru';
+      return availableLangs[0] || 'ru';
+    }
+
+    function getDict() {
+      return TRANSLATIONS[currentLang] || TRANSLATIONS[availableLangs[0]];
     }
 
     function t(key, vars = {}) {
-      const dict = TRANSLATIONS[currentLang] || TRANSLATIONS.ru;
-      let str = dict[key] !== undefined ? dict[key] : (TRANSLATIONS.ru[key] || key);
-      Object.keys(vars).forEach(k => {
-        str = str.replace(new RegExp(`\\{${k}\\}`, 'g'), vars[k]);
-      });
+      const dict = getDict();
+      const fallback = TRANSLATIONS[availableLangs[0]] || {};
+      let str = dict[key] !== undefined ? dict[key] : (fallback[key] !== undefined ? fallback[key] : key);
+      if (typeof str === 'string') {
+        Object.keys(vars).forEach(k => {
+          str = str.replace(new RegExp(`\\{${k}\\}`, 'g'), vars[k]);
+        });
+      }
       return str;
     }
 
@@ -640,16 +638,13 @@
 
       renderLangSwitcher();
 
-      // Заголовок с HTML-ссылками
       document.getElementById('headerSubtitle').innerHTML = t('headerSubtitle');
 
-      // Все элементы с data-i18n
       document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
         el.textContent = t(key);
       });
 
-      // Все плейсхолдеры с data-i18n-placeholder
       document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
         const key = el.getAttribute('data-i18n-placeholder');
         el.placeholder = t(key);
@@ -673,7 +668,7 @@
       }
     }
 
-// Google Maps Autocomplete (Places API New)
+    // Google Maps Autocomplete (Places API New)
     function loadGoogleMapsAutocomplete() {
       if (!GOOGLE_MAPS_API_KEY) return;
       const script = document.createElement('script');
@@ -844,6 +839,8 @@
     const ticketSellerInput = document.getElementById('ticketSeller');
     const ticketUrlInput = document.getElementById('ticketUrl');
 
+    const allFreeValues = availableLangs.map(l => TRANSLATIONS[l].entryFree);
+
     function getSelectedEntryType() {
       const checked = document.querySelector('input[name="entryType"]:checked');
       return checked ? checked.value : 'ticket';
@@ -853,7 +850,7 @@
       const mode = getSelectedEntryType();
 
       if (mode === 'free') {
-        priceInput.value = 'Бесплатно';
+        priceInput.value = t('entryFree');
         priceInput.disabled = true;
         priceInput.required = false;
 
@@ -866,14 +863,13 @@
         ticketUrlInput.value = '';
         ticketUrlInput.disabled = true;
       } else if (mode === 'donation') {
-        if (priceInput.value === 'Бесплатно') {
+        if (allFreeValues.includes(priceInput.value)) {
           priceInput.value = '';
         }
         priceInput.disabled = false;
         priceInput.required = false;
         priceInput.placeholder = t('pricePlaceholderDonation');
 
-        // Раздел продавца билетов полностью отключается при добровольных пожертвованиях
         atDoorCheckbox.checked = false;
         atDoorCheckbox.disabled = true;
 
@@ -883,8 +879,7 @@
         ticketUrlInput.value = '';
         ticketUrlInput.disabled = true;
       } else {
-        // mode === 'ticket'
-        if (priceInput.value === 'Бесплатно') {
+        if (allFreeValues.includes(priceInput.value)) {
           priceInput.value = '';
         }
         priceInput.disabled = false;
@@ -892,7 +887,11 @@
         priceInput.placeholder = t('pricePlaceholderTicket');
 
         atDoorCheckbox.disabled = false;
-        if (!atDoorCheckbox.checked) {
+        if (atDoorCheckbox.checked) {
+          ticketSellerInput.value = t('atDoorPostValue');
+          ticketSellerInput.disabled = true;
+          ticketUrlInput.disabled = true;
+        } else {
           ticketSellerInput.disabled = false;
           ticketUrlInput.disabled = false;
         }
@@ -906,7 +905,7 @@
 
     atDoorCheckbox.addEventListener('change', () => {
       if (atDoorCheckbox.checked) {
-        ticketSellerInput.value = 'на входе';
+        ticketSellerInput.value = t('atDoorPostValue');
         ticketSellerInput.disabled = true;
         ticketUrlInput.value = '';
         ticketUrlInput.disabled = true;
@@ -918,10 +917,6 @@
       updatePreview();
     });
 
-    // Форматирование дат (пост в канал всегда на русском)
-    const DAYS_RU = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
-    const MONTHS_RU = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-
     function getSessionsData() {
       const cards = document.querySelectorAll('.session-card');
       return Array.from(cards).map(card => ({
@@ -932,13 +927,15 @@
     }
 
     function formatSessionsLines(sessions) {
+      const dict = getDict();
       const grouped = [];
+
       sessions.forEach(s => {
-        const timeStr = s.startTime || '[Время]';
+        const timeStr = s.startTime || t('phTime');
         const range = (s.startTime && s.endTime) ? `${s.startTime}-${s.endTime}` : timeStr;
 
         if (!s.date) {
-          grouped.push({ key: 'empty_' + Math.random(), dateLabel: '[День недели], [Дата]', times: [range] });
+          grouped.push({ key: 'empty_' + Math.random(), dateLabel: t('phDate'), times: [range] });
           return;
         }
 
@@ -948,7 +945,11 @@
         } else {
           const [year, month, day] = s.date.split('-').map(Number);
           const d = new Date(year, month - 1, day);
-          const dateLabel = `${DAYS_RU[d.getDay()]}, ${day} ${MONTHS_RU[month - 1]}`;
+          const dayName = dict.days[d.getDay()];
+          const monthName = dict.months[month - 1];
+          const dateLabel = dict.formatDate
+            ? dict.formatDate(dayName, day, monthName)
+            : `${dayName}, ${day} ${monthName}`;
           grouped.push({ key: s.date, dateLabel, times: [range] });
         }
       });
@@ -1041,39 +1042,46 @@
       const rawPrice = priceInput.value.trim();
 
       if (mode === 'free') {
-        return 'Бесплатно';
+        return t('entryFree');
       }
       if (mode === 'donation') {
-        return rawPrice ? `Добровольные пожертвования (${rawPrice})` : 'Добровольные пожертвования';
+        return rawPrice ? `${t('entryDonation')} (${rawPrice})` : t('entryDonation');
       }
-      return rawPrice || '[Цена]';
+      return rawPrice || t('phPrice');
+    }
+
+    function getSelectedLinkTypeText() {
+      const select = document.getElementById('eventLinkType');
+      const opt = select.options[select.selectedIndex];
+      return opt ? opt.textContent : select.value;
     }
 
     function updatePreview() {
-      const title = document.getElementById('title').value.trim() || '[Название мероприятия]';
+      const title = document.getElementById('title').value.trim() || t('phTitle');
       const sessionsLines = formatSessionsLines(getSessionsData());
 
-      const venueName = document.getElementById('venueName').value.trim() || '[Локация]';
+      const venueName = document.getElementById('venueName').value.trim() || t('phVenue');
       const venueUrl = document.getElementById('venueUrl').value.trim();
-      const address = document.getElementById('address').value.trim() || '[Адрес]';
+      const rawAddress = document.getElementById('address').value.trim();
+      const address = rawAddress || t('phAddress');
       const mapUrl = document.getElementById('mapUrl').value.trim();
 
       const mode = getSelectedEntryType();
       const isTicketMode = mode === 'ticket';
       const atDoor = isTicketMode && atDoorCheckbox.checked;
       const priceVal = computeFormattedPrice();
-      const ticketSeller = isTicketMode ? (atDoor ? 'на входе' : ticketSellerInput.value.trim()) : '';
+      const ticketSeller = isTicketMode ? (atDoor ? t('atDoorPostValue') : ticketSellerInput.value.trim()) : '';
       const ticketUrl = (isTicketMode && !atDoor) ? ticketUrlInput.value.trim() : '';
 
-      const eventLinkType = document.getElementById('eventLinkType').value;
+      const eventLinkType = getSelectedLinkTypeText();
       const eventUrl = document.getElementById('eventUrl').value.trim();
-      const description = document.getElementById('description').value.trim() || '[Описание мероприятия]';
+      const description = document.getElementById('description').value.trim() || t('phDesc');
 
       const venueHtml = venueUrl
         ? `<a href="${escapeHtml(venueUrl)}" target="_blank">${escapeHtml(venueName)}</a>`
         : escapeHtml(venueName);
 
-      const effectiveMapUrl = mapUrl || (address !== '[Адрес]' ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venueName + ' ' + address)}` : '');
+      const effectiveMapUrl = mapUrl || (rawAddress ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venueName + ' ' + rawAddress)}` : '');
       const addressHtml = effectiveMapUrl
         ? `<a href="${escapeHtml(effectiveMapUrl)}" target="_blank">${escapeHtml(address)}</a>`
         : escapeHtml(address);
@@ -1091,7 +1099,7 @@
         ? `\n<a href="${escapeHtml(eventUrl)}" target="_blank">${escapeHtml(eventLinkType)}</a>\n`
         : '\n';
 
-      const htmlPost = 
+      const htmlPost =
 `<b>${escapeHtml(title)}</b>
 
 ${sessionsLines}
@@ -1101,9 +1109,9 @@ ${eventLinkBlock}
 ${escapeHtml(description)}
 
 ____
-➔ <a href="https://t.me/romanivanovevents_bot/add">Добавить своё мероприятие</a>.
-➔ <a href="https://calendar.google.com/calendar/u/0?cid=ZDhiNDdiNmFjMWI3MzQ5Mjg4MjI0ZmI0YjA1NTRkNzlmZWIzMTQ4ZjdiNDIxZDI5N2RlOWY2MWI1ZGJiOWRjY0Bncm91cC5jYWxlbmRhci5nb29nbGUuY29t">Google Calendar</a> (со всеми мероприятиями)
-➔ <a href="https://t.me/romanivanovchannel">Roman Ivanov Channel</a>.`;
+${t('footerAddPost')}
+${t('footerCalendar')}
+${t('footerChannel')}`;
 
       const previewEl = document.getElementById('livePreview');
       previewEl.innerHTML = htmlPost;
@@ -1145,7 +1153,6 @@ ____
       el.addEventListener('change', updatePreview);
     });
 
-    // Запускаем язык при загрузке
     setLanguage(currentLang);
 
     // Отправка формы
@@ -1168,6 +1175,7 @@ ____
       const atDoor = isTicketMode && atDoorCheckbox.checked;
 
       const payload = {
+        lang: currentLang,
         organizer: tgUser ? {
           id: tgUser.id,
           username: tgUser.username || '',
@@ -1181,25 +1189,17 @@ ____
         isFree: mode === 'free',
         atDoor: atDoor,
         price: computeFormattedPrice(),
-        ticketSeller: isTicketMode ? (atDoor ? 'на входе' : ticketSellerInput.value.trim()) : '',
+        ticketSeller: isTicketMode ? (atDoor ? t('atDoorPostValue') : ticketSellerInput.value.trim()) : '',
         ticketUrl: (isTicketMode && !atDoor) ? ticketUrlInput.value.trim() : '',
         venueName: document.getElementById('venueName').value.trim(),
         venueUrl: document.getElementById('venueUrl').value.trim(),
         address: document.getElementById('address').value.trim(),
         mapUrl: document.getElementById('mapUrl').value.trim(),
-        eventLinkType: document.getElementById('eventLinkType').value,
+        eventLinkType: getSelectedLinkTypeText(),
         eventUrl: document.getElementById('eventUrl').value.trim(),
         description: document.getElementById('description').value.trim(),
         files: attachedFiles
       };
-
-      if (SCRIPT_URL.includes("ВСТАВЬТЕ_СЮДА")) {
-        console.log("Payload для бэкенда:", payload);
-        setTimeout(() => {
-          showSuccess();
-        }, 700);
-        return;
-      }
 
       try {
         const response = await fetch(SCRIPT_URL, {
