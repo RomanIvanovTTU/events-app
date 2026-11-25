@@ -78,6 +78,11 @@ const TRANSLATIONS = {
     footerCalendar: '➔ <a href="https://calendar.google.com/calendar/u/0?cid=ZDhiNDdiNmFjMWI3MzQ5Mjg4MjI0ZmI0YjA1NTRkNzlmZWIzMTQ4ZjdiNDIxZDI5N2RlOWY2MWI1ZGJiOWRjY0Bncm91cC5jYWxlbmRhci5nb29nbGUuY29t">Google Calendar</a> (со всеми мероприятиями)',
     footerChannel: '➔ <a href="https://t.me/romanivanovchannel">Roman Ivanov Channel</a>.',
 
+    notifyCheckboxLabel: "Уведомить меня в Telegram о изменении статуса заявки (автоматическое сообщение о результате после модерации)",
+    notifyAllowed: "🔔 Уведомление о статусе модерации придёт вам в личные сообщения от бота.",
+    notifyDenied: "🔕 Уведомления от бота отключены. Чтобы узнать о публикации, вы можете запустить бота вручную:",
+    openBotBtn: "Открыть бота",
+    
     submitBtn: "Отправить на модерацию",
     submittingBtn: "Отправка заявки...",
     successTitle: "Заявка отправлена!",
@@ -168,6 +173,11 @@ const TRANSLATIONS = {
     footerCalendar: '➔ <a href="https://calendar.google.com/calendar/u/0?cid=ZDhiNDdiNmFjMWI3MzQ5Mjg4MjI0ZmI0YjA1NTRkNzlmZWIzMTQ4ZjdiNDIxZDI5N2RlOWY2MWI1ZGJiOWRjY0Bncm91cC5jYWxlbmRhci5nb29nbGUuY29t">Google Calendar</a> (kõik üritused)',
     footerChannel: '➔ <a href="https://t.me/romanivanovchannel">Roman Ivanov Channel</a>.',
 
+    notifyCheckboxLabel: "Teavita mind Telegramis taotluse staatuse muutumisest (automaatne sõnum tulemuse kohta pärast modereerimist)",
+    notifyAllowed: "🔔 Teavitus modereerimise tulemuse kohta saadetakse sulle botti privaatsõnumina.",
+    notifyDenied: "🔕 Boti teavitused on välja lülitatud. Avaldamise teavituse saamiseks saad käivitada boti käsitsi:",
+    openBotBtn: "Ava bott",
+    
     submitBtn: "Saada modereerimisele",
     submittingBtn: "Saadan taotlust...",
     successTitle: "Taotlus saadetud!",
@@ -258,6 +268,11 @@ const TRANSLATIONS = {
     footerCalendar: '➔ <a href="https://calendar.google.com/calendar/u/0?cid=ZDhiNDdiNmFjMWI3MzQ5Mjg4MjI0ZmI0YjA1NTRkNzlmZWIzMTQ4ZjdiNDIxZDI5N2RlOWY2MWI1ZGJiOWRjY0Bncm91cC5jYWxlbmRhci5nb29nbGUuY29t">Google Calendar</a> (all events)',
     footerChannel: '➔ <a href="https://t.me/romanivanovchannel">Roman Ivanov Channel</a>.',
 
+    notifyCheckboxLabel: "Notify me in Telegram when the application status changes (automatic message about the result after moderation)",
+    notifyAllowed: "🔔 You will receive a DM from the bot once your event is reviewed.",
+    notifyDenied: "🔕 Bot notifications are disabled. To receive status updates, you can start the bot manually:",
+    openBotBtn: "Open Bot",
+    
     submitBtn: "Submit for Review",
     submittingBtn: "Submitting...",
     successTitle: "Submitted!",
