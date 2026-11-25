@@ -132,8 +132,7 @@
     input[type="url"],
     input[type="date"],
     input[type="time"],
-    select,
-    textarea {
+    select {
       width: 100%;
       padding: 11px 12px;
       border-radius: 10px;
@@ -146,8 +145,7 @@
     }
 
     input:focus,
-    select:focus,
-    textarea:focus {
+    select:focus {
       border-color: var(--button-color);
     }
 
@@ -156,9 +154,177 @@
       cursor: not-allowed;
     }
 
-    textarea {
-      resize: vertical;
-      min-height: 140px;
+    /* =========================================================
+       МИКРО-РЕДАКТОР ОПИСАНИЯ
+       ========================================================= */
+    .rich-editor-wrapper {
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      background-color: var(--secondary-bg);
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+
+    .rich-editor-wrapper:focus-within {
+      border-color: var(--button-color);
+    }
+
+    .editor-toolbar {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 4px;
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--border-color);
+      background-color: var(--bg-color);
+    }
+
+    .toolbar-btn {
+      min-width: 30px;
+      height: 30px;
+      padding: 0 7px;
+      border: 1px solid transparent;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--text-color);
+      font-size: 13.5px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.15s, color 0.15s;
+      user-select: none;
+    }
+
+    .toolbar-btn:hover {
+      background-color: var(--secondary-bg);
+    }
+
+    .toolbar-btn.active {
+      background-color: var(--button-color);
+      color: var(--button-text);
+    }
+
+    .toolbar-divider {
+      width: 1px;
+      height: 18px;
+      background-color: var(--border-color);
+      margin: 0 3px;
+    }
+
+    .link-popover {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      padding: 8px;
+      background-color: var(--bg-color);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .link-popover.open {
+      display: flex;
+    }
+
+    .link-popover input[type="url"] {
+      flex: 1;
+      padding: 7px 10px;
+      font-size: 13.5px;
+      border-radius: 8px;
+    }
+
+    .link-popover-btn {
+      padding: 7px 10px;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .link-apply-btn {
+      background-color: var(--button-color);
+      color: var(--button-text);
+    }
+
+    .link-remove-btn {
+      background-color: rgba(239, 68, 68, 0.12);
+      color: var(--danger-color);
+    }
+
+    .link-cancel-btn {
+      background-color: var(--secondary-bg);
+      color: var(--hint-color);
+    }
+
+    .rich-editor {
+      min-height: 150px;
+      max-height: 420px;
+      overflow-y: auto;
+      padding: 11px 12px;
+      font-size: 15px;
+      line-height: 1.45;
+      color: var(--text-color);
+      outline: none;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+
+    .rich-editor:empty::before {
+      content: attr(data-placeholder);
+      color: var(--hint-color);
+      pointer-events: none;
+    }
+
+    .rich-editor a {
+      color: var(--link-color);
+      text-decoration: underline;
+    }
+
+    .rich-editor blockquote,
+    .post-preview-box blockquote {
+      border-left: 3px solid var(--button-color);
+      padding: 4px 10px;
+      margin: 6px 0;
+      background-color: rgba(128, 128, 128, 0.08);
+      border-radius: 0 6px 6px 0;
+    }
+
+    .rich-editor blockquote[expandable] {
+      position: relative;
+      padding-right: 26px;
+      border-left-style: dashed;
+    }
+
+    .rich-editor blockquote[expandable]::after {
+      content: "▾";
+      position: absolute;
+      right: 8px;
+      bottom: 4px;
+      font-size: 12px;
+      color: var(--button-color);
+      font-weight: 700;
+    }
+
+    .post-preview-box blockquote[expandable] {
+      position: relative;
+      padding-right: 26px;
+      cursor: pointer;
+    }
+
+    .post-preview-box blockquote[expandable]::after {
+      content: "▾";
+      position: absolute;
+      right: 8px;
+      bottom: 4px;
+      font-size: 12px;
+      color: var(--button-color);
+      font-weight: 700;
+    }
+
+    .post-preview-box blockquote[expandable].collapsed {
+      max-height: 4.4em;
+      overflow: hidden;
     }
 
     .row {
@@ -529,7 +695,28 @@
 
       <div class="form-group">
         <label><span data-i18n="descLabel"></span> <span class="required">*</span></label>
-        <textarea id="description" data-i18n-placeholder="descPlaceholder" required></textarea>
+        <div class="rich-editor-wrapper">
+          <div class="editor-toolbar" id="editorToolbar">
+            <button type="button" class="toolbar-btn" data-cmd="bold" data-i18n-title="edBold"><b>B</b></button>
+            <button type="button" class="toolbar-btn" data-cmd="italic" data-i18n-title="edItalic"><i>I</i></button>
+            <button type="button" class="toolbar-btn" data-cmd="underline" data-i18n-title="edUnderline"><u>U</u></button>
+            <button type="button" class="toolbar-btn" data-cmd="strikeThrough" data-i18n-title="edStrike"><s>S</s></button>
+            <span class="toolbar-divider"></span>
+            <button type="button" class="toolbar-btn" id="btnLink" data-i18n-title="edLink">🔗</button>
+            <span class="toolbar-divider"></span>
+            <button type="button" class="toolbar-btn" id="btnQuote" data-i18n-title="edQuote">❝</button>
+            <button type="button" class="toolbar-btn" id="btnQuoteExp" data-i18n-title="edQuoteExp">❝▾</button>
+            <span class="toolbar-divider"></span>
+            <button type="button" class="toolbar-btn" id="btnClearFormat" data-i18n-title="edClear">✕</button>
+          </div>
+          <div class="link-popover" id="linkPopover">
+            <input type="url" id="linkUrlInput" placeholder="https://...">
+            <button type="button" class="link-popover-btn link-apply-btn" id="linkApplyBtn" data-i18n="edLinkApply"></button>
+            <button type="button" class="link-popover-btn link-remove-btn" id="linkRemoveBtn" data-i18n="edLinkRemove" style="display:none;"></button>
+            <button type="button" class="link-popover-btn link-cancel-btn" id="linkCancelBtn">✕</button>
+          </div>
+          <div id="descriptionEditor" class="rich-editor" contenteditable="true" data-i18n-placeholder="descPlaceholder"></div>
+        </div>
         <div class="hint" data-i18n="descHint"></div>
       </div>
 
@@ -654,7 +841,17 @@
 
       document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
         const key = el.getAttribute('data-i18n-placeholder');
-        el.placeholder = t(key);
+        const val = t(key);
+        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+          el.placeholder = val;
+        } else {
+          el.setAttribute('data-placeholder', val);
+        }
+      });
+
+      document.querySelectorAll('[data-i18n-title]').forEach(el => {
+        const key = el.getAttribute('data-i18n-title');
+        el.title = t(key);
       });
 
       updateUserBadge();
@@ -771,6 +968,503 @@
       });
     };
     loadGoogleMapsAutocomplete();
+
+    // =========================================================
+    // МИКРО-РЕДАКТОР И ВХОДЯЩИЙ HTML-ФИЛЬТР
+    // =========================================================
+    const editorEl = document.getElementById('descriptionEditor');
+    const toolbarEl = document.getElementById('editorToolbar');
+    const linkPopover = document.getElementById('linkPopover');
+    const linkUrlInput = document.getElementById('linkUrlInput');
+    const linkApplyBtn = document.getElementById('linkApplyBtn');
+    const linkRemoveBtn = document.getElementById('linkRemoveBtn');
+    const linkCancelBtn = document.getElementById('linkCancelBtn');
+    let savedSelectionRange = null;
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    function escapeAttr(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    function isValidHttpUrl(rawUrl) {
+      try {
+        const parsed = new URL(rawUrl.trim());
+        return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+      } catch (e) {
+        return false;
+      }
+    }
+
+    // Преобразование DOM-дерева редактора или вставленного HTML в чистый Telegram-HTML
+    function sanitizeToTelegramHtml(rootNode, isPaste = false) {
+      function walk(node, insideLink = false) {
+        if (node.nodeType === Node.TEXT_NODE) {
+          return escapeHtml(node.nodeValue);
+        }
+        if (node.nodeType !== Node.ELEMENT_NODE) {
+          return '';
+        }
+
+        const tag = node.tagName.toLowerCase();
+        if (['script', 'style', 'meta', 'link', 'img', 'svg', 'iframe', 'button', 'input'].includes(tag)) {
+          return '';
+        }
+        if (tag === 'br') {
+          return '\n';
+        }
+
+        // Определяем стили (как из тегов, так и из inline CSS при вставке с сайтов/Google Docs)
+        let isBold = (tag === 'b' || tag === 'strong');
+        let isItalic = (tag === 'i' || tag === 'em');
+        let isUnderline = (tag === 'u' || tag === 'ins');
+        let isStrike = (tag === 's' || tag === 'strike' || tag === 'del');
+
+        if (isPaste && node.style) {
+          const fw = node.style.fontWeight;
+          if (fw === 'bold' || fw === 'bolder' || (parseInt(fw, 10) >= 600)) isBold = true;
+          if (node.style.fontStyle === 'italic') isItalic = true;
+          const td = node.style.textDecoration || node.style.textDecorationLine || '';
+          if (td.includes('underline') && tag !== 'a') isUnderline = true;
+          if (td.includes('line-through')) isStrike = true;
+        }
+
+        // Ссылки
+        let href = null;
+        if (tag === 'a' && !insideLink) {
+          const rawHref = (node.getAttribute('href') || '').trim();
+          if (isValidHttpUrl(rawHref)) {
+            href = rawHref;
+            isUnderline = false; // убираем лишнее подчёркивание самой ссылки
+          }
+        }
+
+        // Обработка списков при вставке с сайтов (Telegram не поддерживает <ul>/<ol>)
+        if (tag === 'li') {
+          let innerLi = '';
+          node.childNodes.forEach(child => {
+            innerLi += walk(child, insideLink || Boolean(href));
+          });
+          innerLi = innerLi.replace(/^\n+|\n+$/g, '');
+          return innerLi ? `\n• ${innerLi}\n` : '';
+        }
+
+        let inner = '';
+        node.childNodes.forEach(child => {
+          inner += walk(child, insideLink || Boolean(href));
+        });
+
+        // Цитаты
+        if (tag === 'blockquote') {
+          const isExp = node.hasAttribute('expandable') || node.getAttribute('data-expandable') === 'true';
+          const trimmed = inner.replace(/^\n+|\n+$/g, '');
+          if (!trimmed) return '';
+          return isExp
+            ? `\n<blockquote expandable>${trimmed}</blockquote>\n`
+            : `\n<blockquote>${trimmed}</blockquote>\n`;
+        }
+
+        if (!inner) return '';
+
+        // Если внутри тега только переносы строк, не оборачиваем их в стили
+        if (!inner.trim()) return inner;
+
+        let res = inner;
+        if (isBold) res = `<b>${res}</b>`;
+        if (isItalic) res = `<i>${res}</i>`;
+        if (isUnderline) res = `<u>${res}</u>`;
+        if (isStrike) res = `<s>${res}</s>`;
+        if (href) res = `<a href="${escapeAttr(href)}">${res}</a>`;
+
+        // Блочные элементы оборачиваем в переносы строк
+        if (['div', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'tr', 'section', 'article'].includes(tag)) {
+          return `\n${res}\n`;
+        }
+
+        return res;
+      }
+
+      let raw = '';
+      rootNode.childNodes.forEach(child => {
+        raw += walk(child, false);
+      });
+
+      // Схлопываем избыточные переносы строк (не больше двух подряд) и убираем края
+      return raw
+        .replace(/\r\n/g, '\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .replace(/^\n+|\n+$/g, '');
+    }
+
+    function getDescriptionHtml() {
+      return sanitizeToTelegramHtml(editorEl, false);
+    }
+
+    function getDescriptionPlainText() {
+      return (editorEl.innerText || '').trim();
+    }
+
+    // Сохранение / восстановление выделения при работе с полем ссылки
+    function saveSelection() {
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount > 0) {
+        const range = sel.getRangeAt(0);
+        if (editorEl.contains(range.commonAncestorContainer)) {
+          savedSelectionRange = range.cloneRange();
+        }
+      }
+    }
+
+    function restoreSelection() {
+      if (!savedSelectionRange) return;
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(savedSelectionRange);
+    }
+
+    function findParentTag(node, tagName) {
+      let curr = node && node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
+      while (curr && curr !== editorEl) {
+        if (curr.tagName && curr.tagName.toLowerCase() === tagName.toLowerCase()) {
+          return curr;
+        }
+        curr = curr.parentElement;
+      }
+      return null;
+    }
+
+    // Панель инструментов (B, I, U, S)
+    toolbarEl.querySelectorAll('[data-cmd]').forEach(btn => {
+      btn.addEventListener('mousedown', (e) => {
+        e.preventDefault(); // не теряем фокус в редакторе
+        const cmd = btn.getAttribute('data-cmd');
+        editorEl.focus();
+        document.execCommand(cmd, false, null);
+        updateToolbarState();
+        updatePreview();
+      });
+    });
+
+    // Кнопка "Очистить форматирование"
+    document.getElementById('btnClearFormat').addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      editorEl.focus();
+      document.execCommand('removeFormat', false, null);
+      document.execCommand('unlink', false, null);
+
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount > 0) {
+        const bq = findParentTag(sel.anchorNode, 'blockquote');
+        if (bq) unwrapElement(bq);
+      }
+      updateToolbarState();
+      updatePreview();
+    });
+
+    function unwrapElement(el) {
+      const parent = el.parentNode;
+      while (el.firstChild) {
+        parent.insertBefore(el.firstChild, el);
+      }
+      parent.removeChild(el);
+    }
+
+    // Переключение обычной и сворачиваемой цитаты
+    function toggleBlockquote(expandable) {
+      editorEl.focus();
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0) return;
+
+      const existingBq = findParentTag(sel.anchorNode, 'blockquote');
+      if (existingBq) {
+        const isCurrentlyExp = existingBq.hasAttribute('expandable');
+        if (isCurrentlyExp === expandable) {
+          unwrapElement(existingBq);
+        } else {
+          if (expandable) {
+            existingBq.setAttribute('expandable', '');
+          } else {
+            existingBq.removeAttribute('expandable');
+          }
+        }
+        updateToolbarState();
+        updatePreview();
+        return;
+      }
+
+      const range = sel.getRangeAt(0);
+      const bq = document.createElement('blockquote');
+      if (expandable) bq.setAttribute('expandable', '');
+
+      if (range.collapsed) {
+        // Если текст не выделен — оборачиваем текущий абзац или создаём новую цитату
+        let block = range.startContainer;
+        while (block && block !== editorEl && block.parentNode !== editorEl) {
+          block = block.parentNode;
+        }
+        if (block && block !== editorEl && block.nodeType === Node.ELEMENT_NODE && ['DIV', 'P'].includes(block.tagName)) {
+          while (block.firstChild) bq.appendChild(block.firstChild);
+          block.parentNode.replaceChild(bq, block);
+        } else {
+          bq.innerHTML = '<br>';
+          range.insertNode(bq);
+          const newRange = document.createRange();
+          newRange.setStart(bq, 0);
+          newRange.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(newRange);
+        }
+      } else {
+        const fragment = range.extractContents();
+        bq.appendChild(fragment);
+        range.insertNode(bq);
+        sel.removeAllRanges();
+      }
+
+      updateToolbarState();
+      updatePreview();
+    }
+
+    document.getElementById('btnQuote').addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      toggleBlockquote(false);
+    });
+
+    document.getElementById('btnQuoteExp').addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      toggleBlockquote(true);
+    });
+
+    // Вставка / редактирование ссылки (кнопка 🔗 и Ctrl+K)
+    function openLinkPopover() {
+      saveSelection();
+      const sel = window.getSelection();
+      const existingLink = sel && sel.rangeCount > 0 ? findParentTag(sel.anchorNode, 'a') : null;
+
+      if (existingLink) {
+        linkUrlInput.value = existingLink.getAttribute('href') || '';
+        linkRemoveBtn.style.display = 'inline-block';
+      } else {
+        linkUrlInput.value = '';
+        linkRemoveBtn.style.display = 'none';
+      }
+
+      linkPopover.classList.add('open');
+      setTimeout(() => {
+        linkUrlInput.focus();
+        linkUrlInput.select();
+      }, 10);
+    }
+
+    function closeLinkPopover() {
+      linkPopover.classList.remove('open');
+      editorEl.focus();
+      restoreSelection();
+    }
+
+    function applyLink() {
+      let url = linkUrlInput.value.trim();
+      if (!url) {
+        closeLinkPopover();
+        return;
+      }
+      if (!/^https?:\/\//i.test(url)) {
+        url = 'https://' + url;
+      }
+      if (!isValidHttpUrl(url)) {
+        alert(t('edInvalidUrl'));
+        return;
+      }
+
+      linkPopover.classList.remove('open');
+      editorEl.focus();
+      restoreSelection();
+
+      const sel = window.getSelection();
+      const existingLink = sel && sel.rangeCount > 0 ? findParentTag(sel.anchorNode, 'a') : null;
+
+      if (existingLink) {
+        existingLink.setAttribute('href', url);
+      } else if (sel && sel.rangeCount > 0) {
+        const range = sel.getRangeAt(0);
+        if (range.collapsed) {
+          // Если слово не было выделено — вставляем саму ссылку как текст
+          const a = document.createElement('a');
+          a.href = url;
+          a.textContent = url;
+          range.insertNode(a);
+          range.setStartAfter(a);
+          range.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(range);
+        } else {
+          document.execCommand('createLink', false, url);
+        }
+      }
+
+      updateToolbarState();
+      updatePreview();
+    }
+
+    document.getElementById('btnLink').addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      if (linkPopover.classList.contains('open')) {
+        closeLinkPopover();
+      } else {
+        openLinkPopover();
+      }
+    });
+
+    linkApplyBtn.addEventListener('click', applyLink);
+    linkCancelBtn.addEventListener('click', closeLinkPopover);
+
+    linkRemoveBtn.addEventListener('click', () => {
+      linkPopover.classList.remove('open');
+      editorEl.focus();
+      restoreSelection();
+      const sel = window.getSelection();
+      const existingLink = sel && sel.rangeCount > 0 ? findParentTag(sel.anchorNode, 'a') : null;
+      if (existingLink) {
+        unwrapElement(existingLink);
+      } else {
+        document.execCommand('unlink', false, null);
+      }
+      updateToolbarState();
+      updatePreview();
+    });
+
+    linkUrlInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        applyLink();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        closeLinkPopover();
+      }
+    });
+
+    // Горячие клавиши в редакторе (Ctrl+B, Ctrl+I, Ctrl+U, Ctrl+Shift+X, Ctrl+K)
+    editorEl.addEventListener('keydown', (e) => {
+      const mod = e.ctrlKey || e.metaKey;
+      if (mod) {
+        const key = e.key.toLowerCase();
+        if (key === 'k') {
+          e.preventDefault();
+          openLinkPopover();
+          return;
+        }
+        if (key === 'b') {
+          e.preventDefault();
+          document.execCommand('bold', false, null);
+          updateToolbarState();
+          updatePreview();
+          return;
+        }
+        if (key === 'i') {
+          e.preventDefault();
+          document.execCommand('italic', false, null);
+          updateToolbarState();
+          updatePreview();
+          return;
+        }
+        if (key === 'u') {
+          e.preventDefault();
+          document.execCommand('underline', false, null);
+          updateToolbarState();
+          updatePreview();
+          return;
+        }
+        if (e.shiftKey && key === 'x') {
+          e.preventDefault();
+          document.execCommand('strikeThrough', false, null);
+          updateToolbarState();
+          updatePreview();
+          return;
+        }
+      }
+
+      // Выход из цитаты по Enter на пустой строке
+      if (e.key === 'Enter' && !e.shiftKey) {
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount > 0) {
+          const bq = findParentTag(sel.anchorNode, 'blockquote');
+          if (bq && bq.textContent.trim() === '') {
+            e.preventDefault();
+            const br = document.createElement('div');
+            br.innerHTML = '<br>';
+            bq.parentNode.replaceChild(br, bq);
+            const r = document.createRange();
+            r.setStart(br, 0);
+            r.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(r);
+            updateToolbarState();
+            updatePreview();
+          }
+        }
+      }
+    });
+
+    // Умная вставка с сайтов / Google Docs / Facebook
+    editorEl.addEventListener('paste', (e) => {
+      e.preventDefault();
+      const clipboard = e.clipboardData || window.clipboardData;
+      const htmlData = clipboard.getData('text/html');
+      const textData = clipboard.getData('text/plain');
+
+      let cleanHtml = '';
+      if (htmlData) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlData, 'text/html');
+        cleanHtml = sanitizeToTelegramHtml(doc.body, true);
+      } else if (textData) {
+        cleanHtml = escapeHtml(textData).replace(/\r\n/g, '\n');
+      }
+
+      if (cleanHtml) {
+        // Превращаем \n обратно в <br> для корректной вставки внутрь contenteditable
+        const editorReadyHtml = cleanHtml.replace(/\n/g, '<br>');
+        document.execCommand('insertHTML', false, editorReadyHtml);
+        updatePreview();
+      }
+    });
+
+    // Подсветка активных кнопок в тулбаре
+    function updateToolbarState() {
+      toolbarEl.querySelectorAll('[data-cmd]').forEach(btn => {
+        const cmd = btn.getAttribute('data-cmd');
+        try {
+          btn.classList.toggle('active', document.queryCommandState(cmd));
+        } catch (e) {}
+      });
+
+      const sel = window.getSelection();
+      const anchor = sel && sel.rangeCount > 0 ? sel.anchorNode : null;
+      const inLink = Boolean(findParentTag(anchor, 'a'));
+      const bq = findParentTag(anchor, 'blockquote');
+
+      document.getElementById('btnLink').classList.toggle('active', inLink);
+      document.getElementById('btnQuote').classList.toggle('active', Boolean(bq && !bq.hasAttribute('expandable')));
+      document.getElementById('btnQuoteExp').classList.toggle('active', Boolean(bq && bq.hasAttribute('expandable')));
+    }
+
+    editorEl.addEventListener('keyup', updateToolbarState);
+    editorEl.addEventListener('mouseup', updateToolbarState);
+    editorEl.addEventListener('input', () => {
+      if (editorEl.innerHTML === '<br>' || editorEl.innerHTML === '<div><br></div>') {
+        editorEl.innerHTML = '';
+      }
+      updatePreview();
+    });
 
     // =========================================================
     // УПРАВЛЕНИЕ НЕСКОЛЬКИМИ ДАТАМИ / СЕАНСАМИ
@@ -964,13 +1658,6 @@
       return grouped.map(g => `<b><i>◷ ${g.dateLabel}, ${g.times.join(', ')}</i></b>`).join('\n');
     }
 
-    function escapeHtml(str) {
-      return str
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-    }
-
     // =========================================================
     // ЗАГРУЗКА ОДНОЙ АФИШИ (КАРТИНКИ)
     // =========================================================
@@ -1082,28 +1769,28 @@
 
       const eventLinkType = getSelectedLinkTypeText();
       const eventUrl = document.getElementById('eventUrl').value.trim();
-      const description = document.getElementById('description').value.trim() || t('phDesc');
+      const descHtml = getDescriptionHtml() || escapeHtml(t('phDesc'));
 
       const venueHtml = venueUrl
-        ? `<a href="${escapeHtml(venueUrl)}" target="_blank">${escapeHtml(venueName)}</a>`
+        ? `<a href="${escapeAttr(venueUrl)}" target="_blank">${escapeHtml(venueName)}</a>`
         : escapeHtml(venueName);
 
       const effectiveMapUrl = mapUrl || (rawAddress ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venueName + ' ' + rawAddress)}` : '');
       const addressHtml = effectiveMapUrl
-        ? `<a href="${escapeHtml(effectiveMapUrl)}" target="_blank">${escapeHtml(address)}</a>`
+        ? `<a href="${escapeAttr(effectiveMapUrl)}" target="_blank">${escapeHtml(address)}</a>`
         : escapeHtml(address);
 
       let priceHtml = escapeHtml(priceVal);
       if (ticketUrl && ticketSeller) {
-        priceHtml = `<a href="${escapeHtml(ticketUrl)}" target="_blank">${escapeHtml(priceVal)}</a> (<a href="${escapeHtml(ticketUrl)}" target="_blank">${escapeHtml(ticketSeller)}</a>)`;
+        priceHtml = `<a href="${escapeAttr(ticketUrl)}" target="_blank">${escapeHtml(priceVal)}</a> (<a href="${escapeAttr(ticketUrl)}" target="_blank">${escapeHtml(ticketSeller)}</a>)`;
       } else if (ticketUrl) {
-        priceHtml = `<a href="${escapeHtml(ticketUrl)}" target="_blank">${escapeHtml(priceVal)}</a>`;
+        priceHtml = `<a href="${escapeAttr(ticketUrl)}" target="_blank">${escapeHtml(priceVal)}</a>`;
       } else if (ticketSeller) {
         priceHtml = `${escapeHtml(priceVal)} (${escapeHtml(ticketSeller)})`;
       }
 
       const eventLinkBlock = eventUrl
-        ? `\n<a href="${escapeHtml(eventUrl)}" target="_blank">${escapeHtml(eventLinkType)}</a>\n`
+        ? `\n<a href="${escapeAttr(eventUrl)}" target="_blank">${escapeHtml(eventLinkType)}</a>\n`
         : '\n';
 
       const htmlPost =
@@ -1113,7 +1800,7 @@ ${sessionsLines}
 <b><i>⚲ ${venueHtml} (${addressHtml})</i></b>
 <b><i>€ ${priceHtml}</i></b>
 ${eventLinkBlock}
-${escapeHtml(description)}
+${descHtml}
 
 ____
 ${t('footerAddPost')}
@@ -1122,6 +1809,11 @@ ${t('footerChannel')}`;
 
       const previewEl = document.getElementById('livePreview');
       previewEl.innerHTML = htmlPost;
+
+      // Клик по сворачиваемой цитате в предпросмотре сворачивает/разворачивает её
+      previewEl.querySelectorAll('blockquote[expandable]').forEach(bq => {
+        bq.addEventListener('click', () => bq.classList.toggle('collapsed'));
+      });
 
       const plainLength = previewEl.innerText.length;
       const counterEl = document.getElementById('charCounter');
@@ -1155,7 +1847,7 @@ ${t('footerChannel')}`;
       }
     }
 
-    document.querySelectorAll('#eventForm input, #eventForm select, #eventForm textarea').forEach(el => {
+    document.querySelectorAll('#eventForm input, #eventForm select').forEach(el => {
       el.addEventListener('input', updatePreview);
       el.addEventListener('change', updatePreview);
     });
@@ -1182,6 +1874,12 @@ ${t('footerChannel')}`;
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
+
+      if (!getDescriptionPlainText()) {
+        editorEl.focus();
+        alert(t('edEmptyAlert'));
+        return;
+      }
 
       if (isOverLimit) {
         document.getElementById('limitAlert').scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1222,7 +1920,8 @@ ${t('footerChannel')}`;
         mapUrl: document.getElementById('mapUrl').value.trim(),
         eventLinkType: getSelectedLinkTypeText(),
         eventUrl: document.getElementById('eventUrl').value.trim(),
-        description: document.getElementById('description').value.trim(),
+        description: getDescriptionPlainText(),
+        descriptionHtml: getDescriptionHtml(),
         files: attachedFiles
       };
 
