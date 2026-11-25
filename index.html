@@ -1167,6 +1167,21 @@ ${t('footerChannel')}`;
     // Отправка формы
     const form = document.getElementById('eventForm');
 
+    function askBotWriteAccess() {
+      return new Promise((resolve) => {
+        const wantsNotify = document.getElementById('notifyConsent').checked;
+        if (!wantsNotify) {
+          resolve(false);
+          return;
+        }
+        if (tg.initData && typeof tg.requestWriteAccess === 'function') {
+          tg.requestWriteAccess((allowed) => resolve(Boolean(allowed)));
+        } else {
+          resolve(false);
+        }
+      });
+    }
+    
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
@@ -1174,6 +1189,12 @@ ${t('footerChannel')}`;
         document.getElementById('limitAlert').scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
       }
+
+      const canNotify = await askBotWriteAccess();
+
+      isSubmitting = true;
+      submitBtn.disabled = true;
+      submitBtn.textContent = t('submittingBtn');
 
       isSubmitting = true;
       submitBtn.disabled = true;
@@ -1184,6 +1205,7 @@ ${t('footerChannel')}`;
       const atDoor = isTicketMode && atDoorCheckbox.checked;
 
       const payload = {
+        canNotify: canNotify,
         lang: currentLang,
         organizer: tgUser ? {
           id: tgUser.id,
@@ -1219,7 +1241,7 @@ ${t('footerChannel')}`;
 
         const result = await response.json();
         if (result.status === 'ok') {
-          showSuccess();
+          showSuccess(canNotify);
         } else {
           throw new Error(result.message || 'Error');
         }
@@ -1231,9 +1253,21 @@ ${t('footerChannel')}`;
       }
     });
 
-    function showSuccess() {
+    function showSuccess(canNotify) {
       document.getElementById('formContainer').style.display = 'none';
       document.getElementById('successScreen').style.display = 'block';
+
+      const notifyTextEl = document.getElementById('notifyStatusText');
+      const openBotLink = document.getElementById('openBotLink');
+
+      if (canNotify) {
+        notifyTextEl.textContent = t('notifyAllowed');
+        openBotLink.style.display = 'none';
+      } else {
+        notifyTextEl.textContent = t('notifyDenied');
+        openBotLink.style.display = 'block';
+      }
+
       if (tg.HapticFeedback) {
         tg.HapticFeedback.notificationOccurred('success');
       }
