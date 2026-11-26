@@ -908,10 +908,22 @@
       return TRANSLATIONS[currentLang] || TRANSLATIONS[availableLangs[0]];
     }
 
+    const BUILTIN_FALLBACKS = {
+      errPastDate: {
+        ru: 'Дата мероприятия не может быть в прошлом',
+        en: 'Event date cannot be in the past',
+        et: 'Ürituse kuupäev ei saa olla minevikus'
+      }
+    };
+
     function t(key, vars = {}) {
       const dict = getDict();
       const fallback = TRANSLATIONS[availableLangs[0]] || {};
-      let str = dict[key] !== undefined ? dict[key] : (fallback[key] !== undefined ? fallback[key] : key);
+      let str = dict[key] !== undefined
+        ? dict[key]
+        : (fallback[key] !== undefined
+          ? fallback[key]
+          : (BUILTIN_FALLBACKS[key]?.[currentLang] || BUILTIN_FALLBACKS[key]?.ru || key));
       if (typeof str === 'string') {
         Object.keys(vars).forEach(k => {
           str = str.replace(new RegExp(`\\{${k}\\}`, 'g'), vars[k]);
@@ -1733,6 +1745,7 @@
         <div class="form-group" style="margin-bottom: 10px;">
           <label><span data-i18n="dateLabel">${t('dateLabel')}</span> <span class="required">*</span></label>
           <input type="date" class="s-date" min="${todayStr}" required>
+          <div class="field-error-msg session-date-error" style="display: none;"></div>
         </div>
         <div class="row">
           <div class="form-group" style="margin-bottom: 0;">
@@ -1747,9 +1760,28 @@
         <div class="field-error-msg session-time-error" style="display: none;"></div>
       `;
 
+      const dateInp = div.querySelector('.s-date');
+      const dateErrEl = div.querySelector('.session-date-error');
       const startInp = div.querySelector('.s-start');
       const endInp = div.querySelector('.s-end');
       const timeErrEl = div.querySelector('.session-time-error');
+
+      function validateSessionDate() {
+        const minDate = getTodayLocalDateStr();
+        dateInp.min = minDate;
+        if (dateInp.value && dateInp.value < minDate) {
+          dateInp.classList.add('input-error');
+          dateErrEl.textContent = t('errPastDate');
+          dateErrEl.style.display = 'block';
+          return false;
+        }
+        dateInp.classList.remove('input-error');
+        dateErrEl.style.display = 'none';
+        return true;
+      }
+
+      dateInp.addEventListener('change', validateSessionDate);
+      dateInp.addEventListener('blur', validateSessionDate);
 
       function validateSessionTime() {
         if (startInp.value && endInp.value && endInp.value <= startInp.value) {
@@ -2244,24 +2276,38 @@ ${t('footerChannel')}`;
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      // 1. Проверка времени окончания во всех сеансах
-      let firstTimeErrorEl = null;
+      // 1. Проверка дат (не в прошлом) и времени окончания во всех сеансах
+      let firstSessionErrorEl = null;
+      const minAllowedDate = getTodayLocalDateStr();
+
       document.querySelectorAll('.session-card').forEach(card => {
+        const dEl = card.querySelector('.s-date');
+        const dateErrEl = card.querySelector('.session-date-error');
         const sEl = card.querySelector('.s-start');
         const eEl = card.querySelector('.s-end');
         const timeErrEl = card.querySelector('.session-time-error');
+
+        if (dEl.value && dEl.value < minAllowedDate) {
+          dEl.classList.add('input-error');
+          dateErrEl.textContent = t('errPastDate');
+          dateErrEl.style.display = 'block';
+          if (!firstSessionErrorEl) firstSessionErrorEl = dEl;
+        } else {
+          dEl.classList.remove('input-error');
+          dateErrEl.style.display = 'none';
+        }
 
         if (sEl.value && eEl.value && eEl.value <= sEl.value) {
           eEl.classList.add('input-error');
           timeErrEl.textContent = t('errEndTimeBeforeStart');
           timeErrEl.style.display = 'block';
-          if (!firstTimeErrorEl) firstTimeErrorEl = eEl;
+          if (!firstSessionErrorEl) firstSessionErrorEl = eEl;
         }
       });
 
-      if (firstTimeErrorEl) {
-        firstTimeErrorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        firstTimeErrorEl.focus();
+      if (firstSessionErrorEl) {
+        firstSessionErrorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        firstSessionErrorEl.focus();
         return;
       }
 
