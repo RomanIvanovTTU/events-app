@@ -911,7 +911,7 @@
       let str = dict[key] !== undefined ? dict[key] : (fallback[key] !== undefined ? fallback[key] : key);
       if (typeof str === 'string') {
         Object.keys(vars).forEach(k => {
-          str = str.replace(new RegExp(`\{${k}\}`, 'g'), vars[k]);
+          str = str.replace(new RegExp(`\\{${k}\\}`, 'g'), vars[k]);
         });
       }
       return str;
@@ -1173,7 +1173,6 @@
           node.getAttribute('aria-label') ||
           ''
         ).trim();
-        // Проверяем, что строка короткая и содержит символ эмодзи / пиктограмму (а не длинный alt-текст фото)
         if (candidate && candidate.length <= 16 && /[\p{Extended_Pictographic}\p{Emoji_Component}]/u.test(candidate)) {
           return escapeHtml(candidate);
         }
@@ -1198,8 +1197,7 @@
           return '';
         }
         if (tag === 'br') {
-          return '
-';
+          return '\n';
         }
 
         let isBold = (tag === 'b' || tag === 'strong');
@@ -1231,12 +1229,8 @@
           node.childNodes.forEach(child => {
             innerLi += walk(child, insideLink || Boolean(href));
           });
-          innerLi = innerLi.replace(/^
-+|
-+$/g, '');
-          return innerLi ? `
-• ${innerLi}
-` : '';
+          innerLi = innerLi.replace(/^\n+|\n+$/g, '');
+          return innerLi ? `\n• ${innerLi}\n` : '';
         }
 
         let inner = '';
@@ -1246,17 +1240,11 @@
 
         if (tag === 'blockquote') {
           const isExp = node.hasAttribute('expandable') || node.getAttribute('data-expandable') === 'true';
-          const trimmed = inner.replace(/^
-+|
-+$/g, '');
+          const trimmed = inner.replace(/^\n+|\n+$/g, '');
           if (!trimmed) return '';
           return isExp
-            ? `
-<blockquote expandable>${trimmed}</blockquote>
-`
-            : `
-<blockquote>${trimmed}</blockquote>
-`;
+            ? `\n<blockquote expandable>${trimmed}</blockquote>\n`
+            : `\n<blockquote>${trimmed}</blockquote>\n`;
         }
 
         if (!inner) return '';
@@ -1270,9 +1258,7 @@
         if (href) res = `<a href="${escapeAttr(href)}">${res}</a>`;
 
         if (['div', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'tr', 'section', 'article'].includes(tag)) {
-          return `
-${res}
-`;
+          return `\n${res}\n`;
         }
 
         return res;
@@ -1284,16 +1270,9 @@ ${res}
       });
 
       return raw
-        .replace(/
-/g, '
-')
-        .replace(/
-{3,}/g, '
-
-')
-        .replace(/^
-+|
-+$/g, '');
+        .replace(/\r\n/g, '\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .replace(/^\n+|\n+$/g, '');
     }
 
     function getDescriptionHtml() {
@@ -1669,14 +1648,11 @@ ${res}
         const doc = parser.parseFromString(htmlData, 'text/html');
         cleanHtml = sanitizeToTelegramHtml(doc.body, true);
       } else if (textData) {
-        cleanHtml = escapeHtml(textData).replace(/
-/g, '
-');
+        cleanHtml = escapeHtml(textData).replace(/\r\n/g, '\n');
       }
 
       if (cleanHtml) {
-        const editorReadyHtml = cleanHtml.replace(/
-/g, '<br>');
+        const editorReadyHtml = cleanHtml.replace(/\n/g, '<br>');
         document.execCommand('insertHTML', false, editorReadyHtml);
         updatePreview();
       }
@@ -2016,8 +1992,7 @@ ${res}
         }
       });
 
-      return grouped.map(g => `<b><i>◷ ${g.dateLabel}, ${g.times.join(', ')}</i></b>`).join('
-');
+      return grouped.map(g => `<b><i>◷ ${g.dateLabel}, ${g.times.join(', ')}</i></b>`).join('\n');
     }
 
     // =========================================================
@@ -2175,11 +2150,8 @@ ${res}
       }
 
       const eventLinkBlock = eventUrl
-        ? `
-<a href="${escapeAttr(eventUrl)}" target="_blank">${escapeHtml(eventLinkType)}</a>
-`
-        : '
-';
+        ? `\n<a href="${escapeAttr(eventUrl)}" target="_blank">${escapeHtml(eventLinkType)}</a>\n`
+        : '\n';
 
       const htmlPost =
 `<b>${escapeHtml(title)}</b>
