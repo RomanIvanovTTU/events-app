@@ -28,8 +28,8 @@ const TRANSLATIONS = {
     ticketsSectionLabel: "Билеты",
     atDoorLabel: "На входе",
     atDoorPostValue: "на входе",
-    ticketUrlLabel: "Ссылка на покупку билетов",
-    ticketUrlPlaceholder: "https://fienta.com/...",
+    ticketUrlLabel: "Ссылка на покупку билетов или регистрацию",
+    ticketUrlPlaceholder: "https://www.продажа_билетов.com/ваше_мероприятие",
     addTicketLinkBtn: "+ Добавить ещё ссылку",
     ticketInfoLabel: "Дополнительная информация",
     ticketInfoPlaceholder: "только наличные, без сдачи, вход только по регистрации и т.д.",
@@ -99,7 +99,7 @@ const TRANSLATIONS = {
     notifyAllowed: "🔔 Уведомление о статусе модерации придёт вам в личные сообщения от бота.",
     notifyDenied: "🔕 Уведомления от бота отключены. Чтобы узнать о публикации, вы можете запустить бота вручную:",
     openBotBtn: "Открыть бота",
-    
+
     submitBtn: "Отправить на модерацию",
     submittingBtn: "Отправка заявки...",
     successTitle: "Заявка отправлена!",
@@ -108,7 +108,9 @@ const TRANSLATIONS = {
 
     alertMaxSessions: "Можно добавить не более 10 дат.",
     alertOnlyImage: "Пожалуйста, выберите изображение (JPG, PNG, WEBP).",
-    alertMaxSize: "Размер картинки не должен превышать 10 МБ."
+    alertMaxSize: "Размер картинки не должен превышать 10 МБ.",
+    errEndTimeBeforeStart: "Время окончания должно быть позже времени начала.",
+    errInvalidUrl: "Введите корректную ссылку (например, https://fienta.com/...)."
   },
 
   et: {
@@ -140,8 +142,8 @@ const TRANSLATIONS = {
     ticketsSectionLabel: "Piletid",
     atDoorLabel: "Kohapeal",
     atDoorPostValue: "kohapeal",
-    ticketUrlLabel: "Piletite ostulink",
-    ticketUrlPlaceholder: "https://fienta.com/...",
+    ticketUrlLabel: "Link piletite ostmiseks või registreerimiseks",
+    ticketUrlPlaceholder: "https://www.piletimüük.ee/teie_üritus",
     addTicketLinkBtn: "+ Lisa veel link",
     ticketInfoLabel: "Lisainfo",
     ticketInfoPlaceholder: "ainult sularaha, täpne raha, sissepääs eelregistreerimisega jne",
@@ -211,7 +213,7 @@ const TRANSLATIONS = {
     notifyAllowed: "🔔 Teavitus modereerimise tulemuse kohta saadetakse sulle botti privaatsõnumina.",
     notifyDenied: "🔕 Boti teavitused on välja lülitatud. Avaldamise teavituse saamiseks saad käivitada boti käsitsi:",
     openBotBtn: "Ava bott",
-    
+
     submitBtn: "Saada modereerimisele",
     submittingBtn: "Saadan taotlust...",
     successTitle: "Taotlus saadetud!",
@@ -220,7 +222,9 @@ const TRANSLATIONS = {
 
     alertMaxSessions: "Lisada saab kuni 10 kuupäeva.",
     alertOnlyImage: "Palun vali pildifail (JPG, PNG, WEBP).",
-    alertMaxSize: "Pildi suurus ei tohi ületada 10 MB."
+    alertMaxSize: "Pildi suurus ei tohi ületada 10 MB.",
+    errEndTimeBeforeStart: "Lõppaeg peab olema hilisem kui algusaeg.",
+    errInvalidUrl: "Palun sisesta korrektne link (nt https://fienta.com/...)."
   },
 
   en: {
@@ -252,8 +256,8 @@ const TRANSLATIONS = {
     ticketsSectionLabel: "Tickets",
     atDoorLabel: "At the door",
     atDoorPostValue: "at the door",
-    ticketUrlLabel: "Ticket Purchase Link",
-    ticketUrlPlaceholder: "https://fienta.com/...",
+    ticketUrlLabel: "Ticket purchase or registration link",
+    ticketUrlPlaceholder: "https://www.tickets.com/your_event",
     addTicketLinkBtn: "+ Add another link",
     ticketInfoLabel: "Additional information",
     ticketInfoPlaceholder: "cash only, exact change, registration required, etc.",
@@ -323,7 +327,7 @@ const TRANSLATIONS = {
     notifyAllowed: "🔔 You will receive a DM from the bot once your event is reviewed.",
     notifyDenied: "🔕 Bot notifications are disabled. To receive status updates, you can start the bot manually:",
     openBotBtn: "Open Bot",
-    
+
     submitBtn: "Submit for Review",
     submittingBtn: "Submitting...",
     successTitle: "Submitted!",
@@ -332,6 +336,8 @@ const TRANSLATIONS = {
 
     alertMaxSessions: "You can add up to 10 dates.",
     alertOnlyImage: "Please select an image file (JPG, PNG, WEBP).",
-    alertMaxSize: "Image size must not exceed 10 MB."
+    alertMaxSize: "Image size must not exceed 10 MB.",
+    errEndTimeBeforeStart: "End time must be later than start time.",
+    errInvalidUrl: "Please enter a valid link (e.g. https://fienta.com/...)."
   }
 };
