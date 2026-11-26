@@ -6,6 +6,7 @@
   <title data-i18n="pageTitle"></title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="translations.js"></script>
+  <script src="emojis.js"></script>
   <style>
     :root {
       --bg-color: var(--tg-theme-bg-color, #ffffff);
@@ -24,7 +25,7 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
     }
 
     body {
@@ -271,6 +272,46 @@
     .link-cancel-btn {
       background-color: var(--secondary-bg);
       color: var(--hint-color);
+    }
+
+    .emoji-popover {
+      display: none;
+      padding: 8px;
+      background-color: var(--bg-color);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .emoji-popover.open {
+      display: block;
+    }
+
+    .emoji-grid {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 4px;
+    }
+
+    .emoji-item-btn {
+      height: 34px;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      font-size: 19px;
+      line-height: 1;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.12s, transform 0.1s;
+      user-select: none;
+    }
+
+    .emoji-item-btn:hover {
+      background-color: var(--secondary-bg);
+    }
+
+    .emoji-item-btn:active {
+      transform: scale(0.92);
     }
 
     .rich-editor {
@@ -755,6 +796,7 @@
             <button type="button" class="toolbar-btn" data-cmd="strikeThrough" data-i18n-title="edStrike"><s>S</s></button>
             <span class="toolbar-divider"></span>
             <button type="button" class="toolbar-btn" id="btnLink" data-i18n-title="edLink">🔗</button>
+            <button type="button" class="toolbar-btn" id="btnEmoji" title="Emoji">😊</button>
             <span class="toolbar-divider"></span>
             <button type="button" class="toolbar-btn" id="btnQuote" data-i18n-title="edQuote">❝</button>
             <button type="button" class="toolbar-btn" id="btnQuoteExp" data-i18n-title="edQuoteExp">❝▾</button>
@@ -766,6 +808,9 @@
             <button type="button" class="link-popover-btn link-apply-btn" id="linkApplyBtn" data-i18n="edLinkApply"></button>
             <button type="button" class="link-popover-btn link-remove-btn" id="linkRemoveBtn" data-i18n="edLinkRemove" style="display:none;"></button>
             <button type="button" class="link-popover-btn link-cancel-btn" id="linkCancelBtn">✕</button>
+          </div>
+          <div class="emoji-popover" id="emojiPopover">
+            <div class="emoji-grid" id="emojiGrid"></div>
           </div>
           <div id="descriptionEditor" class="rich-editor" contenteditable="true" data-i18n-placeholder="descPlaceholder"></div>
         </div>
@@ -866,7 +911,7 @@
       let str = dict[key] !== undefined ? dict[key] : (fallback[key] !== undefined ? fallback[key] : key);
       if (typeof str === 'string') {
         Object.keys(vars).forEach(k => {
-          str = str.replace(new RegExp(`\\{${k}\\}`, 'g'), vars[k]);
+          str = str.replace(new RegExp(`\{${k}\}`, 'g'), vars[k]);
         });
       }
       return str;
@@ -1084,7 +1129,7 @@
     loadGoogleMapsAutocomplete();
 
     // =========================================================
-    // МИКРО-РЕДАКТОР И ВХОДЯЩИЙ HTML-ФИЛЬТР
+    // МИКРО-РЕДАКТОР, ПАНЕЛЬ ЭМОДЗИ И ВХОДЯЩИЙ HTML-ФИЛЬТР
     // =========================================================
     const editorEl = document.getElementById('descriptionEditor');
     const toolbarEl = document.getElementById('editorToolbar');
@@ -1093,7 +1138,11 @@
     const linkApplyBtn = document.getElementById('linkApplyBtn');
     const linkRemoveBtn = document.getElementById('linkRemoveBtn');
     const linkCancelBtn = document.getElementById('linkCancelBtn');
+    const emojiPopover = document.getElementById('emojiPopover');
+    const emojiGrid = document.getElementById('emojiGrid');
+    const btnEmoji = document.getElementById('btnEmoji');
     let savedSelectionRange = null;
+    let isComposing = false;
 
     function escapeHtml(str) {
       return String(str)
@@ -1110,6 +1159,28 @@
         .replace(/>/g, '&gt;');
     }
 
+    // Извлекает символ эмодзи из <img> / <tg-emoji> при копировании из Telegram, соцсетей и сайтов
+    function extractEmojiFromNode(node) {
+      const tag = node.tagName ? node.tagName.toLowerCase() : '';
+      if (tag === 'tg-emoji') {
+        const text = (node.textContent || '').trim();
+        return text ? escapeHtml(text) : '';
+      }
+      if (tag === 'img') {
+        const candidate = (
+          node.getAttribute('alt') ||
+          node.getAttribute('data-emoji') ||
+          node.getAttribute('aria-label') ||
+          ''
+        ).trim();
+        // Проверяем, что строка короткая и содержит символ эмодзи / пиктограмму (а не длинный alt-текст фото)
+        if (candidate && candidate.length <= 16 && /[\p{Extended_Pictographic}\p{Emoji_Component}]/u.test(candidate)) {
+          return escapeHtml(candidate);
+        }
+      }
+      return '';
+    }
+
     function sanitizeToTelegramHtml(rootNode, isPaste = false) {
       function walk(node, insideLink = false) {
         if (node.nodeType === Node.TEXT_NODE) {
@@ -1120,11 +1191,15 @@
         }
 
         const tag = node.tagName.toLowerCase();
-        if (['script', 'style', 'meta', 'link', 'img', 'svg', 'iframe', 'button', 'input'].includes(tag)) {
+        if (tag === 'img' || tag === 'tg-emoji') {
+          return extractEmojiFromNode(node);
+        }
+        if (['script', 'style', 'meta', 'link', 'svg', 'iframe', 'button', 'input'].includes(tag)) {
           return '';
         }
         if (tag === 'br') {
-          return '\n';
+          return '
+';
         }
 
         let isBold = (tag === 'b' || tag === 'strong');
@@ -1156,8 +1231,12 @@
           node.childNodes.forEach(child => {
             innerLi += walk(child, insideLink || Boolean(href));
           });
-          innerLi = innerLi.replace(/^\n+|\n+$/g, '');
-          return innerLi ? `\n• ${innerLi}\n` : '';
+          innerLi = innerLi.replace(/^
++|
++$/g, '');
+          return innerLi ? `
+• ${innerLi}
+` : '';
         }
 
         let inner = '';
@@ -1167,11 +1246,17 @@
 
         if (tag === 'blockquote') {
           const isExp = node.hasAttribute('expandable') || node.getAttribute('data-expandable') === 'true';
-          const trimmed = inner.replace(/^\n+|\n+$/g, '');
+          const trimmed = inner.replace(/^
++|
++$/g, '');
           if (!trimmed) return '';
           return isExp
-            ? `\n<blockquote expandable>${trimmed}</blockquote>\n`
-            : `\n<blockquote>${trimmed}</blockquote>\n`;
+            ? `
+<blockquote expandable>${trimmed}</blockquote>
+`
+            : `
+<blockquote>${trimmed}</blockquote>
+`;
         }
 
         if (!inner) return '';
@@ -1185,7 +1270,9 @@
         if (href) res = `<a href="${escapeAttr(href)}">${res}</a>`;
 
         if (['div', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'tr', 'section', 'article'].includes(tag)) {
-          return `\n${res}\n`;
+          return `
+${res}
+`;
         }
 
         return res;
@@ -1197,9 +1284,16 @@
       });
 
       return raw
-        .replace(/\r\n/g, '\n')
-        .replace(/\n{3,}/g, '\n\n')
-        .replace(/^\n+|\n+$/g, '');
+        .replace(/
+/g, '
+')
+        .replace(/
+{3,}/g, '
+
+')
+        .replace(/^
++|
++$/g, '');
     }
 
     function getDescriptionHtml() {
@@ -1237,6 +1331,66 @@
       }
       return null;
     }
+
+    // Инициализация сетки эмодзи из файла emojis.js
+    function initEmojiPicker() {
+      const list = (typeof EVENT_EMOJIS !== 'undefined' && Array.isArray(EVENT_EMOJIS)) ? EVENT_EMOJIS : [];
+      emojiGrid.innerHTML = '';
+
+      list.forEach(emoji => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'emoji-item-btn';
+        btn.textContent = emoji;
+        btn.addEventListener('mousedown', (e) => {
+          e.preventDefault();
+          insertEmojiAtCursor(emoji);
+        });
+        emojiGrid.appendChild(btn);
+      });
+    }
+
+    function insertEmojiAtCursor(emoji) {
+      editorEl.focus();
+      restoreSelection();
+
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount > 0) {
+        const range = sel.getRangeAt(0);
+        if (editorEl.contains(range.commonAncestorContainer)) {
+          range.deleteContents();
+          const textNode = document.createTextNode(emoji);
+          range.insertNode(textNode);
+          range.setStartAfter(textNode);
+          range.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(range);
+          saveSelection();
+          enableSafeClosing();
+          updatePreview();
+          return;
+        }
+      }
+
+      editorEl.appendChild(document.createTextNode(emoji));
+      enableSafeClosing();
+      updatePreview();
+    }
+
+    btnEmoji.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      if (emojiPopover.classList.contains('open')) {
+        emojiPopover.classList.remove('open');
+        btnEmoji.classList.remove('active');
+      } else {
+        saveSelection();
+        linkPopover.classList.remove('open');
+        emojiPopover.classList.add('open');
+        btnEmoji.classList.add('active');
+      }
+    });
+
+    initEmojiPicker();
 
     toolbarEl.querySelectorAll('[data-cmd]').forEach(btn => {
       btn.addEventListener('mousedown', (e) => {
@@ -1338,6 +1492,9 @@
 
     function openLinkPopover() {
       saveSelection();
+      emojiPopover.classList.remove('open');
+      btnEmoji.classList.remove('active');
+
       const sel = window.getSelection();
       const existingLink = sel && sel.rangeCount > 0 ? findParentTag(sel.anchorNode, 'a') : null;
 
@@ -1512,11 +1669,14 @@
         const doc = parser.parseFromString(htmlData, 'text/html');
         cleanHtml = sanitizeToTelegramHtml(doc.body, true);
       } else if (textData) {
-        cleanHtml = escapeHtml(textData).replace(/\r\n/g, '\n');
+        cleanHtml = escapeHtml(textData).replace(/
+/g, '
+');
       }
 
       if (cleanHtml) {
-        const editorReadyHtml = cleanHtml.replace(/\n/g, '<br>');
+        const editorReadyHtml = cleanHtml.replace(/
+/g, '<br>');
         document.execCommand('insertHTML', false, editorReadyHtml);
         updatePreview();
       }
@@ -1540,12 +1700,32 @@
       document.getElementById('btnQuoteExp').classList.toggle('active', Boolean(bq && bq.hasAttribute('expandable')));
     }
 
-    editorEl.addEventListener('keyup', updateToolbarState);
-    editorEl.addEventListener('mouseup', updateToolbarState);
+    editorEl.addEventListener('compositionstart', () => {
+      isComposing = true;
+    });
+
+    editorEl.addEventListener('compositionend', () => {
+      isComposing = false;
+      saveSelection();
+      updatePreview();
+    });
+
+    editorEl.addEventListener('keyup', () => {
+      if (!isComposing) {
+        saveSelection();
+        updateToolbarState();
+      }
+    });
+    editorEl.addEventListener('mouseup', () => {
+      saveSelection();
+      updateToolbarState();
+    });
     editorEl.addEventListener('input', () => {
+      if (isComposing) return;
       if (editorEl.innerHTML === '<br>' || editorEl.innerHTML === '<div><br></div>') {
         editorEl.innerHTML = '';
       }
+      saveSelection();
       updatePreview();
     });
 
@@ -1836,7 +2016,8 @@
         }
       });
 
-      return grouped.map(g => `<b><i>◷ ${g.dateLabel}, ${g.times.join(', ')}</i></b>`).join('\n');
+      return grouped.map(g => `<b><i>◷ ${g.dateLabel}, ${g.times.join(', ')}</i></b>`).join('
+');
     }
 
     // =========================================================
@@ -1994,8 +2175,11 @@
       }
 
       const eventLinkBlock = eventUrl
-        ? `\n<a href="${escapeAttr(eventUrl)}" target="_blank">${escapeHtml(eventLinkType)}</a>\n`
-        : '\n';
+        ? `
+<a href="${escapeAttr(eventUrl)}" target="_blank">${escapeHtml(eventLinkType)}</a>
+`
+        : '
+';
 
       const htmlPost =
 `<b>${escapeHtml(title)}</b>
