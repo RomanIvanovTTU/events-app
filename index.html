@@ -410,9 +410,15 @@
 
     .radio-group {
       display: flex;
-      flex-direction: column;
-      gap: 8px;
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px 18px;
       margin-bottom: 10px;
+    }
+
+    .radio-group .checkbox-row {
+      margin-bottom: 0;
     }
 
     .checkbox-row {
@@ -654,7 +660,7 @@
             <input type="radio" name="entryType" value="free">
             <span data-i18n="entryFree"></span>
           </label>
-          <label class="checkbox-row" style="margin-top: 2px;">
+          <label class="checkbox-row">
             <input type="checkbox" id="hasDonation">
             <span data-i18n="entryDonation"></span>
           </label>
