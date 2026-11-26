@@ -884,6 +884,9 @@
     // =========================================================
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbySqviSBOlMPSlzF8N6Pra9Q1cQeI1TzFoRALCbNMHACICjjnRAVQoDNRJIIfPe8gWE/exec";
     const GOOGLE_MAPS_API_KEY = "AIzaSyArIrLC_kWYtfscg-_PI-pjsAWe2Uf2RhI";
+    const FORM_REQUEST_ID = (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 
     // =========================================================
     // СИСТЕМА ПЕРЕВОДОВ (TRANSLATIONS.JS)
@@ -1711,7 +1714,15 @@
     const sessionsContainer = document.getElementById('sessionsContainer');
     const addSessionBtn = document.getElementById('addSessionBtn');
 
+    function getTodayLocalDateStr() {
+      const now = new Date();
+      return new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+        .toISOString()
+        .split('T')[0];
+    }
+
     function createSessionBlock(index) {
+      const todayStr = getTodayLocalDateStr();
       const div = document.createElement('div');
       div.className = 'session-card';
       div.innerHTML = `
@@ -1721,7 +1732,7 @@
         </div>
         <div class="form-group" style="margin-bottom: 10px;">
           <label><span data-i18n="dateLabel">${t('dateLabel')}</span> <span class="required">*</span></label>
-          <input type="date" class="s-date" required>
+          <input type="date" class="s-date" min="${todayStr}" required>
         </div>
         <div class="row">
           <div class="form-group" style="margin-bottom: 0;">
@@ -2305,6 +2316,7 @@ ${t('footerChannel')}`;
         : (hasDonation ? t('entryDonation') : t('entryFree'));
 
       const payload = {
+        requestId: FORM_REQUEST_ID,
         canNotify: canNotify,
         lang: currentLang,
         organizer: tgUser ? {
