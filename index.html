@@ -158,6 +158,17 @@
       display: none !important;
     }
 
+    .input-error {
+      border-color: var(--danger-color) !important;
+    }
+
+    .field-error-msg {
+      color: var(--danger-color);
+      font-size: 12.5px;
+      font-weight: 500;
+      margin-top: 6px;
+    }
+
     /* =========================================================
        МИКРО-РЕДАКТОР ОПИСАНИЯ
        ========================================================= */
@@ -229,6 +240,7 @@
       display: flex;
     }
 
+    .link-popover input[type="text"],
     .link-popover input[type="url"] {
       flex: 1;
       padding: 7px 10px;
@@ -699,19 +711,19 @@
 
       <div class="form-group">
         <label data-i18n="venueUrlLabel"></label>
-        <input type="url" id="venueUrl" placeholder="https://...">
+        <input type="text" inputmode="url" id="venueUrl" placeholder="https://...">
       </div>
 
       <div class="form-group">
-        <label><span data-i18n="addressLabel"></span> <span class="required">*</span></label>
-        <input type="text" id="address" data-i18n-placeholder="addressPlaceholder" autocomplete="off" required>
+        <label data-i18n="addressLabel"></label>
+        <input type="text" id="address" data-i18n-placeholder="addressPlaceholder" autocomplete="off">
         <div class="map-status" id="mapStatus" data-i18n="mapStatusSelected" style="display: none;"></div>
         <div class="hint" data-i18n="addressHint"></div>
       </div>
 
       <div class="form-group">
         <label data-i18n="mapUrlLabel"></label>
-        <input type="url" id="mapUrl" data-i18n-placeholder="mapUrlPlaceholder">
+        <input type="text" inputmode="url" id="mapUrl" data-i18n-placeholder="mapUrlPlaceholder">
       </div>
 
       <!-- БЛОК 3: ОПИСАНИЕ И СОЦСЕТИ -->
@@ -729,7 +741,7 @@
         </div>
         <div class="form-group" style="flex: 1.6;">
           <label data-i18n="eventUrlLabel"></label>
-          <input type="url" id="eventUrl" placeholder="https://www.facebook.com/events/...">
+          <input type="text" inputmode="url" id="eventUrl" placeholder="https://www.facebook.com/events/...">
         </div>
       </div>
 
@@ -750,7 +762,7 @@
             <button type="button" class="toolbar-btn" id="btnClearFormat" data-i18n-title="edClear">✕</button>
           </div>
           <div class="link-popover" id="linkPopover">
-            <input type="url" id="linkUrlInput" placeholder="https://...">
+            <input type="text" inputmode="url" id="linkUrlInput" placeholder="https://...">
             <button type="button" class="link-popover-btn link-apply-btn" id="linkApplyBtn" data-i18n="edLinkApply"></button>
             <button type="button" class="link-popover-btn link-remove-btn" id="linkRemoveBtn" data-i18n="edLinkRemove" style="display:none;"></button>
             <button type="button" class="link-popover-btn link-cancel-btn" id="linkCancelBtn">✕</button>
@@ -921,6 +933,59 @@
       }
     }
 
+    // =========================================================
+    // ПРОВЕРКА И АВТОДОПОЛНЕНИЕ ССЫЛОК (HTTPS://)
+    // =========================================================
+    function parseAndNormalizeUrl(rawUrl) {
+      let clean = String(rawUrl || '').trim();
+      if (!clean) return { valid: true, url: '' };
+      if (/\s/.test(clean)) return { valid: false, url: clean };
+
+      if (!/^https?:\/\//i.test(clean)) {
+        clean = 'https://' + clean;
+      }
+
+      try {
+        const parsed = new URL(clean);
+        const hostParts = parsed.hostname.split('.');
+        const hasValidDomain = (parsed.protocol === 'http:' || parsed.protocol === 'https:')
+          && hostParts.length >= 2
+          && hostParts[hostParts.length - 1].length >= 2;
+
+        return hasValidDomain ? { valid: true, url: clean } : { valid: false, url: clean };
+      } catch (e) {
+        return { valid: false, url: clean };
+      }
+    }
+
+    function isValidHttpUrl(rawUrl) {
+      return parseAndNormalizeUrl(rawUrl).valid;
+    }
+
+    function attachSmartUrlBehavior(inputEl) {
+      inputEl.setAttribute('autocapitalize', 'off');
+      inputEl.setAttribute('autocorrect', 'off');
+      inputEl.setAttribute('spellcheck', 'false');
+
+      const autoPrependProtocol = () => {
+        const val = inputEl.value.trim();
+        if (!val) return;
+        const res = parseAndNormalizeUrl(val);
+        if (res.valid && inputEl.value.trim() !== res.url) {
+          inputEl.value = res.url;
+          updatePreview();
+        }
+      };
+
+      inputEl.addEventListener('blur', autoPrependProtocol);
+      inputEl.addEventListener('paste', () => setTimeout(autoPrependProtocol, 0));
+    }
+
+    ['venueUrl', 'mapUrl', 'eventUrl', 'linkUrlInput'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) attachSmartUrlBehavior(el);
+    });
+
     // Google Maps Autocomplete (Places API New)
     function loadGoogleMapsAutocomplete() {
       if (!GOOGLE_MAPS_API_KEY) return;
@@ -1045,16 +1110,6 @@
         .replace(/>/g, '&gt;');
     }
 
-    function isValidHttpUrl(rawUrl) {
-      try {
-        const parsed = new URL(rawUrl.trim());
-        return parsed.protocol === 'http:' || parsed.protocol === 'https:';
-      } catch (e) {
-        return false;
-      }
-    }
-
-    // Преобразование DOM-дерева редактора или вставленного HTML в чистый Telegram-HTML
     function sanitizeToTelegramHtml(rootNode, isPaste = false) {
       function walk(node, insideLink = false) {
         if (node.nodeType === Node.TEXT_NODE) {
@@ -1089,8 +1144,9 @@
         let href = null;
         if (tag === 'a' && !insideLink) {
           const rawHref = (node.getAttribute('href') || '').trim();
-          if (isValidHttpUrl(rawHref)) {
-            href = rawHref;
+          const parsedHref = parseAndNormalizeUrl(rawHref);
+          if (parsedHref.valid && parsedHref.url) {
+            href = parsedHref.url;
             isUnderline = false;
           }
         }
@@ -1307,19 +1363,17 @@
     }
 
     function applyLink() {
-      let url = linkUrlInput.value.trim();
-      if (!url) {
+      const parsed = parseAndNormalizeUrl(linkUrlInput.value);
+      if (!parsed.url) {
         closeLinkPopover();
         return;
       }
-      if (!/^https?:\/\//i.test(url)) {
-        url = 'https://' + url;
-      }
-      if (!isValidHttpUrl(url)) {
+      if (!parsed.valid) {
         alert(t('edInvalidUrl'));
         return;
       }
 
+      const url = parsed.url;
       linkPopover.classList.remove('open');
       editorEl.focus();
       restoreSelection();
@@ -1523,7 +1577,27 @@
             <input type="time" class="s-end">
           </div>
         </div>
+        <div class="field-error-msg session-time-error" style="display: none;"></div>
       `;
+
+      const startInp = div.querySelector('.s-start');
+      const endInp = div.querySelector('.s-end');
+      const timeErrEl = div.querySelector('.session-time-error');
+
+      function validateSessionTime() {
+        if (startInp.value && endInp.value && endInp.value <= startInp.value) {
+          endInp.classList.add('input-error');
+          timeErrEl.textContent = t('errEndTimeBeforeStart');
+          timeErrEl.style.display = 'block';
+          return false;
+        }
+        endInp.classList.remove('input-error');
+        timeErrEl.style.display = 'none';
+        return true;
+      }
+
+      startInp.addEventListener('change', validateSessionTime);
+      endInp.addEventListener('change', validateSessionTime);
 
       div.querySelectorAll('input').forEach(inp => {
         inp.addEventListener('input', updatePreview);
@@ -1570,7 +1644,6 @@
     const atDoorCheckbox = document.getElementById('atDoor');
     const ticketInfoInput = document.getElementById('ticketInfo');
 
-    // Разрешаем вводить только цифры и знаки / - – . , + пробел
     priceInput.addEventListener('input', () => {
       const cleaned = priceInput.value.replace(/[^0-9/\-–.,+\s]/g, '');
       if (priceInput.value !== cleaned) {
@@ -1601,15 +1674,11 @@
     atDoorCheckbox.addEventListener('change', updatePreview);
     ticketInfoInput.addEventListener('input', updatePreview);
 
-    // Извлечение домена продавца из ссылки (vnt.ee, fienta.com, stripe.com и т.д.)
     function extractDomainFromUrl(rawUrl) {
-      let clean = String(rawUrl || '').trim();
-      if (!clean) return '';
-      if (!/^https?:\/\//i.test(clean)) {
-        clean = 'https://' + clean;
-      }
+      const parsedObj = parseAndNormalizeUrl(rawUrl);
+      if (!parsedObj.valid || !parsedObj.url) return '';
       try {
-        const hostname = new URL(clean).hostname.toLowerCase().replace(/^www\./, '');
+        const hostname = new URL(parsedObj.url).hostname.toLowerCase().replace(/^www\./, '');
         const parts = hostname.split('.');
         if (parts.length <= 2) return hostname;
         const secondLevel = parts[parts.length - 2];
@@ -1620,12 +1689,6 @@
       } catch (e) {
         return '';
       }
-    }
-
-    function normalizeTicketUrl(rawUrl) {
-      const clean = String(rawUrl || '').trim();
-      if (!clean) return '';
-      return /^https?:\/\//i.test(clean) ? clean : 'https://' + clean;
     }
 
     // Динамический список ссылок на покупку билетов (от 1 до 10)
@@ -1646,11 +1709,13 @@
       row.className = 'ticket-link-row';
 
       const input = document.createElement('input');
-      input.type = 'url';
+      input.type = 'text';
+      input.inputMode = 'url';
       input.className = 'ticket-url-input';
       input.setAttribute('data-i18n-placeholder', 'ticketUrlPlaceholder');
       input.placeholder = t('ticketUrlPlaceholder');
       input.value = initialValue;
+      attachSmartUrlBehavior(input);
       input.addEventListener('input', updatePreview);
       input.addEventListener('change', updatePreview);
 
@@ -1678,17 +1743,16 @@
       enableSafeClosing();
     });
 
-    // Первое поле ссылки создаётся сразу при открытии
     addTicketLinkRow('', true);
 
     function getTicketLinksData() {
       const links = [];
       ticketLinksContainer.querySelectorAll('.ticket-url-input').forEach(inp => {
-        const url = normalizeTicketUrl(inp.value);
-        if (url) {
-          const domain = extractDomainFromUrl(url);
+        const parsed = parseAndNormalizeUrl(inp.value);
+        if (parsed.valid && parsed.url) {
+          const domain = extractDomainFromUrl(parsed.url);
           if (domain) {
-            links.push({ url, domain });
+            links.push({ url: parsed.url, domain });
           }
         }
       });
@@ -1904,25 +1968,30 @@
       const sessionsLines = formatSessionsLines(getSessionsData());
 
       const venueName = document.getElementById('venueName').value.trim() || t('phVenue');
-      const venueUrl = document.getElementById('venueUrl').value.trim();
+      const parsedVenueUrl = parseAndNormalizeUrl(document.getElementById('venueUrl').value);
+      const venueUrl = parsedVenueUrl.valid ? parsedVenueUrl.url : '';
+
       const rawAddress = document.getElementById('address').value.trim();
-      const address = rawAddress || t('phAddress');
-      const mapUrl = document.getElementById('mapUrl').value.trim();
+      const parsedMapUrl = parseAndNormalizeUrl(document.getElementById('mapUrl').value);
+      const mapUrl = parsedMapUrl.valid ? parsedMapUrl.url : '';
 
       const priceHtml = buildFormattedPriceHtml();
 
       const eventLinkType = getSelectedLinkTypeText();
-      const eventUrl = document.getElementById('eventUrl').value.trim();
+      const parsedEventUrl = parseAndNormalizeUrl(document.getElementById('eventUrl').value);
+      const eventUrl = parsedEventUrl.valid ? parsedEventUrl.url : '';
       const descHtml = getDescriptionHtml() || escapeHtml(t('phDesc'));
 
       const venueHtml = venueUrl
         ? `<a href="${escapeAttr(venueUrl)}" target="_blank">${escapeHtml(venueName)}</a>`
         : escapeHtml(venueName);
 
-      const effectiveMapUrl = mapUrl || (rawAddress ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venueName + ' ' + rawAddress)}` : '');
-      const addressHtml = effectiveMapUrl
-        ? `<a href="${escapeAttr(effectiveMapUrl)}" target="_blank">${escapeHtml(address)}</a>`
-        : escapeHtml(address);
+      let locationLineHtml = `<b><i>⚲ ${venueHtml}</i></b>`;
+      if (rawAddress) {
+        const effectiveMapUrl = mapUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venueName + ' ' + rawAddress)}`;
+        const addressHtml = `<a href="${escapeAttr(effectiveMapUrl)}" target="_blank">${escapeHtml(rawAddress)}</a>`;
+        locationLineHtml = `<b><i>⚲ ${venueHtml} (${addressHtml})</i></b>`;
+      }
 
       const eventLinkBlock = eventUrl
         ? `\n<a href="${escapeAttr(eventUrl)}" target="_blank">${escapeHtml(eventLinkType)}</a>\n`
@@ -1932,7 +2001,7 @@
 `<b>${escapeHtml(title)}</b>
 
 ${sessionsLines}
-<b><i>⚲ ${venueHtml} (${addressHtml})</i></b>
+${locationLineHtml}
 <b><i>€ ${priceHtml}</i></b>
 ${eventLinkBlock}
 ${descHtml}
@@ -2008,6 +2077,49 @@ ${t('footerChannel')}`;
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
+      // 1. Проверка времени окончания во всех сеансах
+      let firstTimeErrorEl = null;
+      document.querySelectorAll('.session-card').forEach(card => {
+        const sEl = card.querySelector('.s-start');
+        const eEl = card.querySelector('.s-end');
+        const timeErrEl = card.querySelector('.session-time-error');
+
+        if (sEl.value && eEl.value && eEl.value <= sEl.value) {
+          eEl.classList.add('input-error');
+          timeErrEl.textContent = t('errEndTimeBeforeStart');
+          timeErrEl.style.display = 'block';
+          if (!firstTimeErrorEl) firstTimeErrorEl = eEl;
+        }
+      });
+
+      if (firstTimeErrorEl) {
+        firstTimeErrorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        firstTimeErrorEl.focus();
+        return;
+      }
+
+      // 2. Нормализация и проверка всех введённых ссылок
+      const urlInputs = [
+        ...document.querySelectorAll('.ticket-url-input'),
+        document.getElementById('venueUrl'),
+        document.getElementById('mapUrl'),
+        document.getElementById('eventUrl')
+      ];
+
+      for (const inp of urlInputs) {
+        const res = parseAndNormalizeUrl(inp.value);
+        if (!res.valid) {
+          inp.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          inp.focus();
+          alert(t('errInvalidUrl'));
+          return;
+        }
+        if (res.url) {
+          inp.value = res.url;
+        }
+      }
+
+      // 3. Проверка описания и лимита символов
       if (!getDescriptionPlainText()) {
         editorEl.focus();
         alert(t('edEmptyAlert'));
