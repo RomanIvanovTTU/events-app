@@ -154,6 +154,10 @@
       cursor: not-allowed;
     }
 
+    .hidden {
+      display: none !important;
+    }
+
     /* =========================================================
        МИКРО-РЕДАКТОР ОПИСАНИЯ
        ========================================================= */
@@ -379,6 +383,29 @@
       font-weight: 600;
       cursor: pointer;
       margin-bottom: 14px;
+    }
+
+    .ticket-link-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .remove-ticket-link-btn {
+      flex-shrink: 0;
+      width: 36px;
+      height: 40px;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      background-color: var(--secondary-bg);
+      color: var(--danger-color);
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .radio-group {
@@ -620,33 +647,40 @@
         <label><span data-i18n="entryLabel"></span> <span class="required">*</span></label>
         <div class="radio-group">
           <label class="checkbox-row">
-            <input type="radio" name="entryType" value="free">
-            <span data-i18n="entryFree"></span>
-          </label>
-          <label class="checkbox-row">
-            <input type="radio" name="entryType" value="donation">
-            <span data-i18n="entryDonation"></span>
-          </label>
-          <label class="checkbox-row">
             <input type="radio" name="entryType" value="ticket" checked>
             <span data-i18n="entryTicket"></span>
           </label>
+          <label class="checkbox-row">
+            <input type="radio" name="entryType" value="free">
+            <span data-i18n="entryFree"></span>
+          </label>
+          <label class="checkbox-row" style="margin-top: 2px;">
+            <input type="checkbox" id="hasDonation">
+            <span data-i18n="entryDonation"></span>
+          </label>
         </div>
-        <input type="text" id="price" required>
+        <div id="priceInputWrap">
+          <input type="text" id="price" data-i18n-placeholder="pricePlaceholderTicket" inputmode="decimal" required>
+        </div>
       </div>
 
       <div class="form-group">
-        <label data-i18n="sellerLabel"></label>
+        <label data-i18n="ticketsSectionLabel"></label>
         <label class="checkbox-row">
           <input type="checkbox" id="atDoor">
           <span data-i18n="atDoorLabel"></span>
         </label>
-        <input type="text" id="ticketSeller" data-i18n-placeholder="sellerPlaceholder">
       </div>
 
       <div class="form-group">
         <label data-i18n="ticketUrlLabel"></label>
-        <input type="url" id="ticketUrl" placeholder="https://fienta.com/...">
+        <div id="ticketLinksContainer"></div>
+        <button type="button" class="add-session-btn" id="addTicketLinkBtn" style="margin-bottom: 0;" data-i18n="addTicketLinkBtn"></button>
+      </div>
+
+      <div class="form-group">
+        <label data-i18n="ticketInfoLabel"></label>
+        <input type="text" id="ticketInfo" data-i18n-placeholder="ticketInfoPlaceholder">
       </div>
 
       <!-- БЛОК 2: МЕСТО ПРОВЕДЕНИЯ -->
@@ -1032,7 +1066,6 @@
           return '\n';
         }
 
-        // Определяем стили (как из тегов, так и из inline CSS при вставке с сайтов/Google Docs)
         let isBold = (tag === 'b' || tag === 'strong');
         let isItalic = (tag === 'i' || tag === 'em');
         let isUnderline = (tag === 'u' || tag === 'ins');
@@ -1047,17 +1080,15 @@
           if (td.includes('line-through')) isStrike = true;
         }
 
-        // Ссылки
         let href = null;
         if (tag === 'a' && !insideLink) {
           const rawHref = (node.getAttribute('href') || '').trim();
           if (isValidHttpUrl(rawHref)) {
             href = rawHref;
-            isUnderline = false; // убираем лишнее подчёркивание самой ссылки
+            isUnderline = false;
           }
         }
 
-        // Обработка списков при вставке с сайтов (Telegram не поддерживает <ul>/<ol>)
         if (tag === 'li') {
           let innerLi = '';
           node.childNodes.forEach(child => {
@@ -1072,7 +1103,6 @@
           inner += walk(child, insideLink || Boolean(href));
         });
 
-        // Цитаты
         if (tag === 'blockquote') {
           const isExp = node.hasAttribute('expandable') || node.getAttribute('data-expandable') === 'true';
           const trimmed = inner.replace(/^\n+|\n+$/g, '');
@@ -1083,8 +1113,6 @@
         }
 
         if (!inner) return '';
-
-        // Если внутри тега только переносы строк, не оборачиваем их в стили
         if (!inner.trim()) return inner;
 
         let res = inner;
@@ -1094,7 +1122,6 @@
         if (isStrike) res = `<s>${res}</s>`;
         if (href) res = `<a href="${escapeAttr(href)}">${res}</a>`;
 
-        // Блочные элементы оборачиваем в переносы строк
         if (['div', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'tr', 'section', 'article'].includes(tag)) {
           return `\n${res}\n`;
         }
@@ -1107,7 +1134,6 @@
         raw += walk(child, false);
       });
 
-      // Схлопываем избыточные переносы строк (не больше двух подряд) и убираем края
       return raw
         .replace(/\r\n/g, '\n')
         .replace(/\n{3,}/g, '\n\n')
@@ -1122,7 +1148,6 @@
       return (editorEl.innerText || '').trim();
     }
 
-    // Сохранение / восстановление выделения при работе с полем ссылки
     function saveSelection() {
       const sel = window.getSelection();
       if (sel && sel.rangeCount > 0) {
@@ -1151,10 +1176,9 @@
       return null;
     }
 
-    // Панель инструментов (B, I, U, S)
     toolbarEl.querySelectorAll('[data-cmd]').forEach(btn => {
       btn.addEventListener('mousedown', (e) => {
-        e.preventDefault(); // не теряем фокус в редакторе
+        e.preventDefault();
         const cmd = btn.getAttribute('data-cmd');
         editorEl.focus();
         document.execCommand(cmd, false, null);
@@ -1163,7 +1187,6 @@
       });
     });
 
-    // Кнопка "Очистить форматирование"
     document.getElementById('btnClearFormat').addEventListener('mousedown', (e) => {
       e.preventDefault();
       editorEl.focus();
@@ -1187,7 +1210,6 @@
       parent.removeChild(el);
     }
 
-    // Переключение обычной и сворачиваемой цитаты
     function toggleBlockquote(expandable) {
       editorEl.focus();
       const sel = window.getSelection();
@@ -1215,7 +1237,6 @@
       if (expandable) bq.setAttribute('expandable', '');
 
       if (range.collapsed) {
-        // Если текст не выделен — оборачиваем текущий абзац или создаём новую цитату
         let block = range.startContainer;
         while (block && block !== editorEl && block.parentNode !== editorEl) {
           block = block.parentNode;
@@ -1253,7 +1274,6 @@
       toggleBlockquote(true);
     });
 
-    // Вставка / редактирование ссылки (кнопка 🔗 и Ctrl+K)
     function openLinkPopover() {
       saveSelection();
       const sel = window.getSelection();
@@ -1306,7 +1326,6 @@
       } else if (sel && sel.rangeCount > 0) {
         const range = sel.getRangeAt(0);
         if (range.collapsed) {
-          // Если слово не было выделено — вставляем саму ссылку как текст
           const a = document.createElement('a');
           a.href = url;
           a.textContent = url;
@@ -1361,7 +1380,6 @@
       }
     });
 
-    // Горячие клавиши в редакторе (Ctrl+B, Ctrl+I, Ctrl+U, Ctrl+Shift+X, Ctrl+K)
     editorEl.addEventListener('keydown', (e) => {
       const mod = e.ctrlKey || e.metaKey;
       if (mod) {
@@ -1401,7 +1419,6 @@
         }
       }
 
-      // Выход из цитаты по Enter на пустой строке
       if (e.key === 'Enter' && !e.shiftKey) {
         const sel = window.getSelection();
         if (sel && sel.rangeCount > 0) {
@@ -1423,7 +1440,6 @@
       }
     });
 
-    // Умная вставка с сайтов / Google Docs / Facebook
     editorEl.addEventListener('paste', (e) => {
       e.preventDefault();
       const clipboard = e.clipboardData || window.clipboardData;
@@ -1440,14 +1456,12 @@
       }
 
       if (cleanHtml) {
-        // Превращаем \n обратно в <br> для корректной вставки внутрь contenteditable
         const editorReadyHtml = cleanHtml.replace(/\n/g, '<br>');
         document.execCommand('insertHTML', false, editorReadyHtml);
         updatePreview();
       }
     });
 
-    // Подсветка активных кнопок в тулбаре
     function updateToolbarState() {
       toolbarEl.querySelectorAll('[data-cmd]').forEach(btn => {
         const cmd = btn.getAttribute('data-cmd');
@@ -1541,15 +1555,23 @@
     sessionsContainer.appendChild(createSessionBlock(0));
 
     // =========================================================
-    // ЛОГИКА РАДИО-КНОПОК УСЛОВИЙ ВХОДА И ЧЕК-БОКСА "НА ВХОДЕ"
+    // ЛОГИКА ЦЕНЫ, ДОБРОВОЛЬНЫХ ПОЖЕРТВОВАНИЙ И ССЫЛОК НА БИЛЕТЫ
     // =========================================================
     const entryTypeRadios = document.querySelectorAll('input[name="entryType"]');
+    const priceInputWrap = document.getElementById('priceInputWrap');
     const priceInput = document.getElementById('price');
+    const hasDonationCheckbox = document.getElementById('hasDonation');
     const atDoorCheckbox = document.getElementById('atDoor');
-    const ticketSellerInput = document.getElementById('ticketSeller');
-    const ticketUrlInput = document.getElementById('ticketUrl');
+    const ticketInfoInput = document.getElementById('ticketInfo');
 
-    const allFreeValues = availableLangs.map(l => TRANSLATIONS[l].entryFree);
+    // Разрешаем вводить только цифры и знаки / - – . , + пробел
+    priceInput.addEventListener('input', () => {
+      const cleaned = priceInput.value.replace(/[^0-9/\-–.,+\s]/g, '');
+      if (priceInput.value !== cleaned) {
+        priceInput.value = cleaned;
+      }
+      updatePreview();
+    });
 
     function getSelectedEntryType() {
       const checked = document.querySelector('input[name="entryType"]:checked');
@@ -1557,55 +1579,11 @@
     }
 
     function applyEntryTypeState() {
-      const mode = getSelectedEntryType();
-
-      if (mode === 'free') {
-        priceInput.value = t('entryFree');
-        priceInput.disabled = true;
-        priceInput.required = false;
-
-        atDoorCheckbox.checked = false;
-        atDoorCheckbox.disabled = true;
-
-        ticketSellerInput.value = '';
-        ticketSellerInput.disabled = true;
-
-        ticketUrlInput.value = '';
-        ticketUrlInput.disabled = true;
-      } else if (mode === 'donation') {
-        if (allFreeValues.includes(priceInput.value)) {
-          priceInput.value = '';
-        }
-        priceInput.disabled = false;
-        priceInput.required = false;
-        priceInput.placeholder = t('pricePlaceholderDonation');
-
-        atDoorCheckbox.checked = false;
-        atDoorCheckbox.disabled = true;
-
-        ticketSellerInput.value = '';
-        ticketSellerInput.disabled = true;
-
-        ticketUrlInput.value = '';
-        ticketUrlInput.disabled = true;
-      } else {
-        if (allFreeValues.includes(priceInput.value)) {
-          priceInput.value = '';
-        }
-        priceInput.disabled = false;
-        priceInput.required = true;
-        priceInput.placeholder = t('pricePlaceholderTicket');
-
-        atDoorCheckbox.disabled = false;
-        if (atDoorCheckbox.checked) {
-          ticketSellerInput.value = t('atDoorPostValue');
-          ticketSellerInput.disabled = true;
-          ticketUrlInput.disabled = true;
-        } else {
-          ticketSellerInput.disabled = false;
-          ticketUrlInput.disabled = false;
-        }
-      }
+      const isTicket = getSelectedEntryType() === 'ticket';
+      priceInputWrap.classList.toggle('hidden', !isTicket);
+      priceInput.disabled = !isTicket;
+      priceInput.required = isTicket;
+      priceInput.placeholder = t('pricePlaceholderTicket');
       updatePreview();
     }
 
@@ -1613,19 +1591,143 @@
       radio.addEventListener('change', applyEntryTypeState);
     });
 
-    atDoorCheckbox.addEventListener('change', () => {
-      if (atDoorCheckbox.checked) {
-        ticketSellerInput.value = t('atDoorPostValue');
-        ticketSellerInput.disabled = true;
-        ticketUrlInput.value = '';
-        ticketUrlInput.disabled = true;
-      } else {
-        ticketSellerInput.value = '';
-        ticketSellerInput.disabled = false;
-        ticketUrlInput.disabled = false;
+    hasDonationCheckbox.addEventListener('change', updatePreview);
+    atDoorCheckbox.addEventListener('change', updatePreview);
+    ticketInfoInput.addEventListener('input', updatePreview);
+
+    // Извлечение домена продавца из ссылки (vnt.ee, fienta.com, stripe.com и т.д.)
+    function extractDomainFromUrl(rawUrl) {
+      let clean = String(rawUrl || '').trim();
+      if (!clean) return '';
+      if (!/^https?:\/\//i.test(clean)) {
+        clean = 'https://' + clean;
       }
-      updatePreview();
+      try {
+        const hostname = new URL(clean).hostname.toLowerCase().replace(/^www\./, '');
+        const parts = hostname.split('.');
+        if (parts.length <= 2) return hostname;
+        const secondLevel = parts[parts.length - 2];
+        if (['co', 'com', 'org', 'net', 'edu', 'gov'].includes(secondLevel) && parts.length >= 3) {
+          return parts.slice(-3).join('.');
+        }
+        return parts.slice(-2).join('.');
+      } catch (e) {
+        return '';
+      }
+    }
+
+    function normalizeTicketUrl(rawUrl) {
+      const clean = String(rawUrl || '').trim();
+      if (!clean) return '';
+      return /^https?:\/\//i.test(clean) ? clean : 'https://' + clean;
+    }
+
+    // Динамический список ссылок на покупку билетов (от 1 до 10)
+    const MAX_TICKET_LINKS = 10;
+    const ticketLinksContainer = document.getElementById('ticketLinksContainer');
+    const addTicketLinkBtn = document.getElementById('addTicketLinkBtn');
+
+    function updateAddTicketBtnVisibility() {
+      const count = ticketLinksContainer.querySelectorAll('.ticket-link-row').length;
+      addTicketLinkBtn.classList.toggle('hidden', count >= MAX_TICKET_LINKS);
+    }
+
+    function addTicketLinkRow(initialValue = '', isFirst = false) {
+      const count = ticketLinksContainer.querySelectorAll('.ticket-link-row').length;
+      if (count >= MAX_TICKET_LINKS) return;
+
+      const row = document.createElement('div');
+      row.className = 'ticket-link-row';
+
+      const input = document.createElement('input');
+      input.type = 'url';
+      input.className = 'ticket-url-input';
+      input.setAttribute('data-i18n-placeholder', 'ticketUrlPlaceholder');
+      input.placeholder = t('ticketUrlPlaceholder');
+      input.value = initialValue;
+      input.addEventListener('input', updatePreview);
+      input.addEventListener('change', updatePreview);
+
+      row.appendChild(input);
+
+      if (!isFirst) {
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'remove-ticket-link-btn';
+        removeBtn.textContent = '✕';
+        removeBtn.addEventListener('click', () => {
+          row.remove();
+          updateAddTicketBtnVisibility();
+          updatePreview();
+        });
+        row.appendChild(removeBtn);
+      }
+
+      ticketLinksContainer.appendChild(row);
+      updateAddTicketBtnVisibility();
+    }
+
+    addTicketLinkBtn.addEventListener('click', () => {
+      addTicketLinkRow('', false);
+      enableSafeClosing();
     });
+
+    // Первое поле ссылки создаётся сразу при открытии
+    addTicketLinkRow('', true);
+
+    function getTicketLinksData() {
+      const links = [];
+      ticketLinksContainer.querySelectorAll('.ticket-url-input').forEach(inp => {
+        const url = normalizeTicketUrl(inp.value);
+        if (url) {
+          const domain = extractDomainFromUrl(url);
+          if (domain) {
+            links.push({ url, domain });
+          }
+        }
+      });
+      return links;
+    }
+
+    function buildFormattedPriceHtml() {
+      const mode = getSelectedEntryType();
+      const isFree = mode === 'free';
+      const hasDonation = hasDonationCheckbox.checked;
+      const atDoor = atDoorCheckbox.checked;
+      const ticketInfo = ticketInfoInput.value.trim();
+      const ticketLinks = getTicketLinksData();
+
+      let baseText = '';
+      if (!isFree) {
+        baseText = escapeHtml(priceInput.value.trim() || t('phPrice'));
+      } else {
+        baseText = escapeHtml(hasDonation ? t('entryDonation') : t('entryFree'));
+      }
+
+      const additions = [];
+      ticketLinks.forEach(item => {
+        additions.push(`(<a href="${escapeAttr(item.url)}" target="_blank">${escapeHtml(item.domain)}</a>)`);
+      });
+      if (atDoor) {
+        additions.push(escapeHtml(t('atDoorPostValue')));
+      }
+      if (ticketInfo) {
+        additions.push(escapeHtml(ticketInfo));
+      }
+
+      let result = baseText;
+      if (additions.length > 0) {
+        const startsWithLink = ticketLinks.length > 0;
+        const separator = (isFree && !startsWithLink) ? ', ' : ' ';
+        result += separator + additions.join(', ');
+      }
+
+      if (!isFree && hasDonation) {
+        result += ` + ${escapeHtml(t('entryDonationSuffix'))}`;
+      }
+
+      return result;
+    }
 
     function getSessionsData() {
       const cards = document.querySelectorAll('.session-card');
@@ -1676,7 +1778,7 @@
     let isSubmitting = false;
     let isOverLimit = false;
 
-mediaInput.addEventListener('change', async (e) => {
+    mediaInput.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
 
@@ -1759,15 +1861,6 @@ mediaInput.addEventListener('change', async (e) => {
       });
     }
 
-    function fileToBase64(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-    }
-
     function renderFileList() {
       previewList.innerHTML = '';
       attachedFiles.forEach((file) => {
@@ -1794,19 +1887,6 @@ mediaInput.addEventListener('change', async (e) => {
     const submitBtn = document.getElementById('submitBtn');
     const MAX_POST_LENGTH = 4096;
 
-    function computeFormattedPrice() {
-      const mode = getSelectedEntryType();
-      const rawPrice = priceInput.value.trim();
-
-      if (mode === 'free') {
-        return t('entryFree');
-      }
-      if (mode === 'donation') {
-        return rawPrice ? `${t('entryDonation')} (${rawPrice})` : t('entryDonation');
-      }
-      return rawPrice || t('phPrice');
-    }
-
     function getSelectedLinkTypeText() {
       const select = document.getElementById('eventLinkType');
       const opt = select.options[select.selectedIndex];
@@ -1823,12 +1903,7 @@ mediaInput.addEventListener('change', async (e) => {
       const address = rawAddress || t('phAddress');
       const mapUrl = document.getElementById('mapUrl').value.trim();
 
-      const mode = getSelectedEntryType();
-      const isTicketMode = mode === 'ticket';
-      const atDoor = isTicketMode && atDoorCheckbox.checked;
-      const priceVal = computeFormattedPrice();
-      const ticketSeller = isTicketMode ? (atDoor ? t('atDoorPostValue') : ticketSellerInput.value.trim()) : '';
-      const ticketUrl = (isTicketMode && !atDoor) ? ticketUrlInput.value.trim() : '';
+      const priceHtml = buildFormattedPriceHtml();
 
       const eventLinkType = getSelectedLinkTypeText();
       const eventUrl = document.getElementById('eventUrl').value.trim();
@@ -1842,15 +1917,6 @@ mediaInput.addEventListener('change', async (e) => {
       const addressHtml = effectiveMapUrl
         ? `<a href="${escapeAttr(effectiveMapUrl)}" target="_blank">${escapeHtml(address)}</a>`
         : escapeHtml(address);
-
-      let priceHtml = escapeHtml(priceVal);
-      if (ticketUrl && ticketSeller) {
-        priceHtml = `<a href="${escapeAttr(ticketUrl)}" target="_blank">${escapeHtml(priceVal)}</a> (<a href="${escapeAttr(ticketUrl)}" target="_blank">${escapeHtml(ticketSeller)}</a>)`;
-      } else if (ticketUrl) {
-        priceHtml = `<a href="${escapeAttr(ticketUrl)}" target="_blank">${escapeHtml(priceVal)}</a>`;
-      } else if (ticketSeller) {
-        priceHtml = `${escapeHtml(priceVal)} (${escapeHtml(ticketSeller)})`;
-      }
 
       const eventLinkBlock = eventUrl
         ? `\n<a href="${escapeAttr(eventUrl)}" target="_blank">${escapeHtml(eventLinkType)}</a>\n`
@@ -1872,7 +1938,6 @@ ${t('footerChannel')}`;
       const previewEl = document.getElementById('livePreview');
       previewEl.innerHTML = htmlPost;
 
-      // Клик по сворачиваемой цитате в предпросмотре сворачивает/разворачивает её
       previewEl.querySelectorAll('blockquote[expandable]').forEach(bq => {
         bq.addEventListener('click', () => bq.classList.toggle('collapsed'));
       });
@@ -1955,8 +2020,15 @@ ${t('footerChannel')}`;
       submitBtn.textContent = t('submittingBtn');
 
       const mode = getSelectedEntryType();
-      const isTicketMode = mode === 'ticket';
-      const atDoor = isTicketMode && atDoorCheckbox.checked;
+      const isFree = mode === 'free';
+      const hasDonation = hasDonationCheckbox.checked;
+      const atDoor = atDoorCheckbox.checked;
+      const ticketLinks = getTicketLinksData();
+      const ticketInfo = ticketInfoInput.value.trim();
+
+      const rawPrice = !isFree
+        ? priceInput.value.trim()
+        : (hasDonation ? t('entryDonation') : t('entryFree'));
 
       const payload = {
         canNotify: canNotify,
@@ -1971,11 +2043,15 @@ ${t('footerChannel')}`;
         title: document.getElementById('title').value.trim(),
         sessions: getSessionsData(),
         entryType: mode,
-        isFree: mode === 'free',
+        priceType: mode,
+        isFree: isFree,
+        hasDonation: hasDonation,
         atDoor: atDoor,
-        price: computeFormattedPrice(),
-        ticketSeller: isTicketMode ? (atDoor ? t('atDoorPostValue') : ticketSellerInput.value.trim()) : '',
-        ticketUrl: (isTicketMode && !atDoor) ? ticketUrlInput.value.trim() : '',
+        price: rawPrice,
+        ticketLinks: ticketLinks,
+        ticketInfo: ticketInfo,
+        ticketSeller: ticketLinks.map(l => l.domain).join(', '),
+        ticketUrl: ticketLinks.length > 0 ? ticketLinks[0].url : '',
         venueName: document.getElementById('venueName').value.trim(),
         venueUrl: document.getElementById('venueUrl').value.trim(),
         address: document.getElementById('address').value.trim(),
